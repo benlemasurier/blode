@@ -20,12 +20,10 @@ Array.prototype.remove = function(e) {
 };
 
 function Config() {
-    this.log_ip = "127.0.0.1";
+    this.bind_ip = "127.0.0.1";
     this.log_port = 8000;
-    this.broadcast_socket_ip = "127.0.0.1";
     this.broadcast_socket_port = 8001;
-    this.broadcast_http_ip = "127.0.0.1";
-    this.broadcast_http_port = 80;
+    this.broadcast_http_port = 8002;
     this.debug = true;
 }
 
@@ -67,23 +65,16 @@ var server  = net.createServer(function(stream) {
         });
     });
 });
-server.listen(config.broadcast_socket_port, config.broadcast_socket_ip);
+server.listen(config.broadcast_socket_port, config.bind_ip);
 
 // HTTP event broadcast
-http.createServer(function(request, response) {
-    request.on("end", function() {
-        var body = "{ id: " + id +
+var http_broadcast = http.createServer(function(request, response) {
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.write("{ id: " + id +
                    ", severity: " + severity + " }" +
-                   ", message: " + message + " }";
-
-        response.writeHead(200, { 
-            "Content-Length": body.length,
-            "Content-Type": "application/json" ,
-            "Access-Control-Allow-Origin": "*"
-        });
-        response.end(body);
-    });
-}).listen(config.broadcast_http_port, config.broadcast_http_ip);
+                   ", message: " + message + " }");
+    response.end();
+}).listen(config.broadcast_http_port, config.bind_ip);
 
 // Listen to log events
 http.createServer(function(request, response) {
@@ -107,6 +98,6 @@ http.createServer(function(request, response) {
             ", severity: " + severity +
             ", message: " + message +" }");
     }
-}).listen(config.log_port, config.log_ip);
+}).listen(config.log_port, config.bind_ip);
 
-sys.puts("Server started at http://" + config.log_ip + ":" + config.log_port);
+sys.puts("Server started at http://" + config.bind_ip + ":" + config.log_port);
