@@ -1,3 +1,17 @@
+/*
+ * (syslog like) message severity
+ *
+ * 0: emerge
+ * 1: alert
+ * 2: crit
+ * 3: err
+ * 4: warning
+ * 5: notice
+ * 6: info
+ * 7: debug
+ * 8: none
+ *
+ */
 function Config() {
     this.listen_ip = "127.0.0.1";
     this.listen_port = 8000;
@@ -19,8 +33,8 @@ http.createServer(function(request, response) {
     if(config.debug) {
         console.log((new Date()) + 
             ": received request. " +
-            " { message: " + parameters.message + 
-            ", status: " + parameters.status +" }");
+            " { severity: " + parameters.severity + 
+            ", message: " + parameters.message +" }");
     }
 
     response.end();
