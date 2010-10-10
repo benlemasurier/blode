@@ -69,7 +69,8 @@ server.listen(config.broadcast_socket_port, config.bind_ip);
 
 // HTTP event broadcast
 var http_broadcast = http.createServer(function(request, response) {
-    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    // response.writeHead(200, { 'Content-Type': 'application/json' });
     response.write("{ id: " + id +
                    ", severity: " + severity + " }" +
                    ", message: " + message + " }");
