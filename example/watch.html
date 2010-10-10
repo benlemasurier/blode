@@ -5,6 +5,7 @@
         <script src="scriptaculous.js?load=effects" type="text/javascript"></script>
         <style type="text/css">
             body {
+                font-family: helvetica, arial;
                 background-color: #eee;
                 margin: 0;
                 padding: 0;
@@ -15,13 +16,35 @@
                 margin: 0;
             }
 
-            ul#messages ul {
-                border-bottom: solid 1px #ddd;
+            ul#messages ul {border-bottom: solid 3px #333;}
+            ul#messages ul li { display: inline-block; padding: 5px 10px; }
+            ul#messages ul li.severity { width: 100px; color: #fff; font-weight: bold; }
+            ul#messages ul li.severity.emerge {
+                background-color: red;
             }
-
-            ul#messages ul li {
-                display: inline-block;
-                padding: 5px 10px;
+            ul#messages ul li.severity.alert {
+                background-color: orange;
+            }
+            ul#messages ul li.severity.crit {
+                background-color: #0066cc;
+            }
+            ul#messages ul li.severity.err {
+                background-color: #ffff00;
+            }
+            ul#messages ul li.severity.warning {
+                background-color: #660000;
+            }
+            ul#messages ul li.severity.notice {
+                background-color: #0099cc;
+            }
+            ul#messages ul li.severity.info {
+                background-color: #99cc00;
+            }
+            ul#messages ul li.severity.debug {
+                background-color: #999966;
+            }
+            ul#messages ul li.severity.none {
+                background-color: white;
             }
         </style>
     </head>
@@ -40,7 +63,7 @@
                             var log = transport.responseJSON;
                             if(log.id > last_id) {
                                 last_id = log.id;
-                                $('messages').insert("<ul><li>" + log.severity + "</li><li>" + log.message + "</li></ul>");
+                                $('messages').insert({ top: "<ul><li class=\"severity " + log.severity + "\">" + log.severity + "</li><li class=\"message\">" + log.message + "</li></ul>" });
                             }
                         }
                     });

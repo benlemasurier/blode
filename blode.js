@@ -33,7 +33,7 @@ function Client(stream) {
 
 function LogMessage() {
     this.id = 0;
-    this.severity = 8;
+    this.severity = 'none';
     this.message = '--MARK--';
 }
 
