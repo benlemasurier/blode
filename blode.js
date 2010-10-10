@@ -31,7 +31,7 @@ function Client(stream) {
     this.stream = stream;
 }
 
-var config = new Config;
+var config = new Config,
     net     = require("net");
     sys     = require("sys"),
     http    = require("http"),
