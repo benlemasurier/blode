@@ -1,17 +1,14 @@
 function Config() {
-    var listen_ip = "127.0.0.1",
-        listen_port = 8000,
-        debug = true;
+    this.listen_ip = "127.0.0.1";
+    this.listen_port = 8000;
+    this.debug = true;
 }
 
-var config = new Config(),
+var config = new Config;
     sys  = require("sys"),
     http = require("http"),
     url  = require("url");
 
-var blah = new Config();
-console.log(blah.listen_ip);
-/*
 http.createServer(function(request, response) {
     var parameters = url.parse(request.url, true).query;
 
@@ -30,4 +27,3 @@ http.createServer(function(request, response) {
 }).listen(config.listen_port, config.listen_ip);
 
 sys.puts("Server start at http://" + config.listen_ip + ":" + config.listen_port);
-*/
