@@ -80,7 +80,6 @@ http.createServer(function(request, response) {
             " { severity: " + parameters.severity + 
             ", message: " + parameters.message +" }");
     }
-
 }).listen(config.log_port, config.log_ip);
 
 sys.puts("Server started at http://" + config.log_ip + ":" + config.log_port);
