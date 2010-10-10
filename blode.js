@@ -73,8 +73,7 @@ server.listen(config.broadcast_socket_port, config.bind_ip);
 // HTTP event broadcast
 var http_broadcast = http.createServer(function(request, response) {
     response.writeHead(200, { "Content-Type": "application/json" });
-    response.write(JSON.stringify(log));
-    response.end();
+    response.end(JSON.stringify(log));
 }).listen(config.broadcast_http_port, config.bind_ip);
 
 // Listen to log events
@@ -84,9 +83,7 @@ http.createServer(function(request, response) {
     log.severity = parameters.severity;
     log.message = parameters.message;
 
-    response.writeHead(200, { 
-        "Content-Type": "text/html",
-    });
+    response.writeHead(200);
     response.end();
 
     // emit message event
