@@ -62,9 +62,7 @@ var server  = net.createServer(function(stream) {
 
     emitter.on("log", function(severity, message) {
         clients.forEach(function(client) {
-            client.stream.write("{ id: " + log.id + 
-                                ", severity: " + log.severity +
-                                ", message: " + log.message + " }\r\n");
+            client.stream.write(JSON.stringify(log) + "\r\n");
         });
     });
 });
