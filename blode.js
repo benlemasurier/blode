@@ -31,17 +31,20 @@ function Client(stream) {
     this.stream = stream;
 }
 
-var config = new Config,
-    id      = 0;
-    net     = require("net");
+function LogMessage() {
+    this.id = 0;
+    this.severity = 8;
+    this.message = '--MARK--';
+}
+
+var net     = require("net");
     sys     = require("sys"),
     http    = require("http"),
     url     = require("url");
     event   = require("events")
     emitter = new event.EventEmitter,
-    id = 0,
-    severity = 8,
-    message = '--MARK--';
+    config  = new Config,
+    log     = new LogMessage;
 
 // Socket event broadcast
 var clients = [];
@@ -59,9 +62,9 @@ var server  = net.createServer(function(stream) {
 
     emitter.on("log", function(severity, message) {
         clients.forEach(function(client) {
-            client.stream.write("{ id: " + id + 
-                                ", severity: " + severity +
-                                ", message: " + message + " }\r\n");
+            client.stream.write("{ id: " + log.id + 
+                                ", severity: " + log.severity +
+                                ", message: " + log.message + " }\r\n");
         });
     });
 });
@@ -69,17 +72,17 @@ server.listen(config.broadcast_socket_port, config.bind_ip);
 
 // HTTP event broadcast
 var http_broadcast = http.createServer(function(request, response) {
-    response.writeHead(200, { "Content-Type": "text/plain" });
-    response.write("test.\r\n");
+    response.writeHead(200, { "Content-Type": "application/json" });
+    response.write(JSON.stringify(log));
     response.end();
 }).listen(config.broadcast_http_port, config.bind_ip);
 
 // Listen to log events
 http.createServer(function(request, response) {
     var parameters = url.parse(request.url, true).query;
-    id++;
-    severity = parameters.severity;
-    message = parameters.message;
+    log.id++;
+    log.severity = parameters.severity;
+    log.message = parameters.message;
 
     response.writeHead(200, { 
         "Content-Type": "text/html",
@@ -87,14 +90,14 @@ http.createServer(function(request, response) {
     response.end();
 
     // emit message event
-    emitter.emit("log", id, parameters.severity, parameters.message);
+    emitter.emit("log", log.id, log.severity, log.message);
 
     if(config.debug) {
         console.log((new Date()) + 
             ": received request. " +
-            " { id: " + id +
-            ", severity: " + severity +
-            ", message: " + message +" }");
+            " { id: " + log.id +
+            ", severity: " + log.severity +
+            ", message: " + log.message +" }");
     }
 }).listen(config.log_port, config.bind_ip);
 
