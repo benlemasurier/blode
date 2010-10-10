@@ -39,7 +39,7 @@ var config = new Config;
     event   = require("events")
     emitter = new event.EventEmitter;
 
-// Broadcat log events
+// Broadcast log events
 var clients = [];
 var server  = net.createServer(function(stream) {
     stream.setEncoding('utf8');
