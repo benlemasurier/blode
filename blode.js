@@ -22,8 +22,10 @@ Array.prototype.remove = function(e) {
 function Config() {
     this.log_ip = "127.0.0.1";
     this.log_port = 8000;
-    this.broadcast_ip = "127.0.0.1";
-    this.broadcast_port = 8001;
+    this.broadcast_socket_ip = "127.0.0.1";
+    this.broadcast_socket_port = 8001;
+    this.broadcast_http_ip = "127.0.0.1";
+    this.broadcast_http_port = 80;
     this.debug = true;
 }
 
@@ -32,14 +34,18 @@ function Client(stream) {
 }
 
 var config = new Config,
+    id      = 0;
     net     = require("net");
     sys     = require("sys"),
     http    = require("http"),
     url     = require("url");
     event   = require("events")
-    emitter = new event.EventEmitter;
+    emitter = new event.EventEmitter,
+    id = 0,
+    severity = 8,
+    message = '--MARK--';
 
-// Broadcast log events
+// Socket event broadcast
 var clients = [];
 var server  = net.createServer(function(stream) {
     stream.setEncoding('utf8');
@@ -55,16 +61,36 @@ var server  = net.createServer(function(stream) {
 
     emitter.on("log", function(severity, message) {
         clients.forEach(function(client) {
-            client.stream.write("{ severity: " + severity 
-                              + ", message: " + message + " }\r\n");
+            client.stream.write("{ id: " + id + 
+                                ", severity: " + severity +
+                                ", message: " + message + " }\r\n");
         });
     });
 });
-server.listen(config.broadcast_port, config.broadcast_ip);
+server.listen(config.broadcast_socket_port, config.broadcast_socket_ip);
+
+// HTTP event broadcast
+http.createServer(function(request, response) {
+    request.on("end", function() {
+        var body = "{ id: " + id +
+                   ", severity: " + severity + " }" +
+                   ", message: " + message + " }";
+
+        response.writeHead(200, { 
+            "Content-Length": body.length,
+            "Content-Type": "application/json" ,
+            "Access-Control-Allow-Origin": "*"
+        });
+        response.end(body);
+    });
+}).listen(config.broadcast_http_port, config.broadcast_http_ip);
 
 // Listen to log events
 http.createServer(function(request, response) {
     var parameters = url.parse(request.url, true).query;
+    id++;
+    severity = parameters.severity;
+    message = parameters.message;
 
     response.writeHead(200, { 
         "Content-Type": "text/html",
@@ -72,13 +98,14 @@ http.createServer(function(request, response) {
     response.end();
 
     // emit message event
-    emitter.emit("log", parameters.severity, parameters.message);
+    emitter.emit("log", id, parameters.severity, parameters.message);
 
     if(config.debug) {
         console.log((new Date()) + 
             ": received request. " +
-            " { severity: " + parameters.severity + 
-            ", message: " + parameters.message +" }");
+            " { id: " + id +
+            ", severity: " + severity +
+            ", message: " + message +" }");
     }
 }).listen(config.log_port, config.log_ip);
 

@@ -6,8 +6,20 @@
     </head>
 
     <body>
+        <div id="messages">
+        </div>
+        
         <script language="javascript">
-            
+            document.observe("dom:loaded", function() {
+                window.setInterval(function() {
+                    new Ajax.Request('http://127.0.0.1/', {
+                        onSuccess: function(response) {
+                            console.log(response);
+                        },
+                    });
+                }, 1000);
+            });
+
         </script>
     </body>
 </html>
