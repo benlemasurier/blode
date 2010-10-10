@@ -1,0 +1,9 @@
+# start log server
+$ node blode.js
+
+# start logging test events
+$ cd test
+$ ./ping &
+
+# listen to events
+$ ./example_netcat_client.sh &
