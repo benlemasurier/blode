@@ -93,11 +93,7 @@ http.createServer(function(request, response) {
     emitter.emit("log", log.id, log.severity, log.message);
 
     if(config.debug) {
-        console.log((new Date()) + 
-            ": received request. " +
-            " { id: " + log.id +
-            ", severity: " + log.severity +
-            ", message: " + log.message +" }");
+        console.log((new Date()) + " received request: " + JSON.stringify(log));
     }
 }).listen(config.log_port, config.bind_ip);
 
