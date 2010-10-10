@@ -72,7 +72,7 @@ var http_broadcast = http.createServer(function(request, response) {
     response.writeHead(200, { 'Content-Type': 'text/plain' });
     // response.writeHead(200, { 'Content-Type': 'application/json' });
     response.write("{ id: " + id +
-                   ", severity: " + severity + " }" +
+                   ", severity: " + severity +
                    ", message: " + message + " }");
     response.end();
 }).listen(config.broadcast_http_port, config.bind_ip);
