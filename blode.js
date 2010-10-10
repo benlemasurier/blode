@@ -69,6 +69,7 @@ http.createServer(function(request, response) {
     response.writeHead(200, { 
         "Content-Type": "text/html",
     });
+    response.end();
 
     // emit message event
     emitter.emit("log", parameters.severity, parameters.message);
@@ -80,7 +81,6 @@ http.createServer(function(request, response) {
             ", message: " + parameters.message +" }");
     }
 
-    response.end();
 }).listen(config.log_port, config.log_ip);
 
 sys.puts("Server started at http://" + config.log_ip + ":" + config.log_port);
