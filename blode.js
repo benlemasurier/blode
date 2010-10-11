@@ -10,6 +10,7 @@ DEBUG = false;
 HOST = "127.0.0.1";
 
 require("./lib/libblode");
+require("./lib/Math.uuid");
 
 var net = require("net"),
     sys = require("sys"),
