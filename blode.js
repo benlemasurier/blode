@@ -9,7 +9,7 @@
 DEBUG = false;
 HOST = "127.0.0.1";
 
-require("./lib");
+require("./lib/libblode");
 
 var net = require("net"),
     sys = require("sys"),
@@ -29,7 +29,7 @@ http.createServer(function(request, response) {
   var parameters = url.parse(request.url, true).query;
 
   try {
-    log_buffer.id++;
+    log_buffer.id = Math.uuid();
     log_buffer.severity = parameters.severity;
     log_buffer.message = parameters.message;
 
