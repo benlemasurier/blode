@@ -17,9 +17,12 @@ var net = require("net"),
     http = require("http"),
     event = require("events"),
     emitter = new event.EventEmitter,
-    config = require('./config').config;
-
-var log_buffer = { id: 0, severity: 'none', message:  '--MARK--' };
+    config = require('./config').config,
+    log_buffer = { 
+      id: 0, 
+      severity: 'none', 
+      message:  '--MARK--' 
+    };
 
 // Listen to log events
 http.createServer(function(request, response) {
