@@ -13,11 +13,7 @@
  *
  */
 
-Array.prototype.remove = function(e) {
-  for (var i = 0; i < this.length; i++) {
-    if (e == this[i]) { return this.splice(i, 1); }
-  }
-};
+require("./lib.js");
 
 function Config() {
     this.bind_ip = "127.0.0.1";
