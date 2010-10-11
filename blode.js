@@ -7,6 +7,8 @@
  */
 
 DEBUG = false;
+HOST = "127.0.0.1";
+
 require("./lib");
 
 var net = require("net"),
@@ -17,15 +19,7 @@ var net = require("net"),
     emitter = new event.EventEmitter,
     config = require('./config').config;
 
-var log_buffer = {
-  id: 0,
-  severity: 'none',
-  message:  '--MARK--'
-};
-
-function Client(stream) {
-  this.stream = stream;
-}
+var log_buffer = { id: 0, severity: 'none', message:  '--MARK--' };
 
 // Listen to log events
 http.createServer(function(request, response) {
@@ -55,10 +49,13 @@ http.createServer(function(request, response) {
   }
 
   response.end();
-}).listen(config.log_port, config.bind_ip);
-sys.puts("Event capture daemon started at http://" + config.bind_ip + ":" + config.log_port);
+}).listen(config.log_port, HOST);
+sys.puts("Event capture daemon started at http://" + HOST + ":" + config.log_port);
 
 // Socket event broadcast
+function Client(stream) {
+  this.stream = stream;
+}
 var clients = [];
 var server  = net.createServer(function(stream) {
   stream.setEncoding('utf8');
@@ -78,12 +75,12 @@ var server  = net.createServer(function(stream) {
     });
   });
 });
-server.listen(config.broadcast_socket_port, config.bind_ip);
-sys.puts("Event socket broadcast daemon started at " + config.bind_ip + ":" + config.broadcast_socket_port);
+server.listen(config.broadcast_socket_port, HOST);
+sys.puts("Event socket broadcast daemon started at " + HOST + ":" + config.broadcast_socket_port);
 
 // HTTP event broadcast
 var http_broadcast = http.createServer(function(request, response) {
   response.writeHead(200, { "Content-Type": "application/json" });
   response.end(JSON.stringify(log_buffer));
-}).listen(config.broadcast_http_port, config.bind_ip);
+}).listen(config.broadcast_http_port, HOST);
 sys.puts("Event HTTP broadcast daemon started at " + config.bind_ip + ":" + config.broadcast_http_port);
