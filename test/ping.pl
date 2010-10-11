@@ -1,7 +1,9 @@
 #!/usr/bin/perl
 use strict;
 use LWP::Simple;
+use String::Random;
 
+my $random_string = new String::Random;
 my @levels = ("emerge",
               "alert",
               "crit",
@@ -14,6 +16,7 @@ my @levels = ("emerge",
 
 for(;;) {
     my $level = $levels[rand(8)];
-    print get("http://localhost:8000?severity=$level&message=test");
+    my $message = $random_string->randpattern("ccccccccccccccccccccccccccccc");
+    print get("http://localhost:8000?severity=$level&message=test: $message");
     sleep(1);
 }

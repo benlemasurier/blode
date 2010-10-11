@@ -11,17 +11,12 @@
                 padding: 0;
             }
 
-            ul {
-                padding: 0;
-                margin: 0;
-            }
-
-            ul#messages ul {border-bottom: solid 3px #333;}
+            ul { padding: 0; margin: 0; }
+            ul#messages { max-height: 320px; overflow: auto; }
+            ul#messages ul { border-bottom: solid 3px #333; }
             ul#messages ul li { display: inline-block; padding: 5px 10px; }
             ul#messages ul li.severity { width: 100px; color: #fff; font-weight: bold; }
-            ul#messages ul li.severity.emerge {
-                background-color: red;
-            }
+            ul#messages ul li.severity.emerge { background-color: red; }
             ul#messages ul li.severity.alert {
                 background-color: orange;
             }
