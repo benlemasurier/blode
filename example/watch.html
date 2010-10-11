@@ -103,7 +103,7 @@
 
                 var last_id = 0,
                     canvas = $('buzz'),
-                    decay = 1,
+                    decay = 2,
                     log_levels = ["emerge", "alert", "crit", "err", "warning", "notice", "info", "debug", "none" ],
                     level_location = new LogLevelYPixelLocation,
                     level_counts = new LogLevelCount,
@@ -126,7 +126,7 @@
                             level_widths[level] -= decay;
                         }
                     });
-                }, 500);
+                }, 100);
 
                 window.setInterval(function() {
                     new Ajax.Request('/proxy', {
@@ -136,9 +136,17 @@
                                 last_id = log.id;
                                 $('messages').insert({ top: "<ul><li class=\"severity " + log.severity + "\">" + log.severity + "</li><li class=\"message\">" + log.message + "</li></ul>" });
 
+                                $('messages').childElements().each(function(message) {
+                                    if(message.viewportOffset().top > ($('messages').getDimensions().height - message.getDimensions().height)) {
+                                        message.remove();
+                                    }
+                                });
+
                                 // canvas stuff. (never done this..)
                                 if(canvas.getContext) {
-                                    level_widths[log.severity] += 50;
+                                    if(level_widths[log.severity] < canvas.width) {
+                                        level_widths[log.severity] += 200;
+                                    }
                                     level_counts[log.severity]++;
                                 } else {
                                     canvas.innerHTML = 'yr browser sucks.';
