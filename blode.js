@@ -27,32 +27,42 @@ var net = require("net"),
 
 // Listen to log events
 http.createServer(function(request, response) {
-  var parameters = url.parse(request.url, true).query;
+  request.extract_message = function() {
+    return(url.parse(this.url, true).query);
+  };
 
-  try {
-    log_buffer.id = Math.uuid();
-    log_buffer.severity = parameters.severity;
-    log_buffer.message = parameters.message;
+  request.is_valid = function() {
+    var query = this.extract_message();
+    if(typeof query.severity !== 'undefined' &&
+       typeof query.message !== 'undefined')
+      return(true);
+    else
+      return(false);
+  };
 
-    // HTTP 200 OK
-    response.writeHead(200);
-
-    // emit message event
-    emitter.emit("log", log_buffer.severity, log_buffer.message);
+  if(!request.is_valid()) {
+    response.writeHead(400); // HTTP 400
+    response.end();
 
     if(DEBUG)
-      console.log((new Date().getTime()) + " received request: " + JSON.stringify(log_buffer));
-  } catch(error) {
-    // Bad request
-    response.writeHead(400);
+      console.log((new Date().getTime()) + " malformed request: " + request.url);
 
-    if(DEBUG) {
-      console.log(error);
-      console.log((new Date().getTime()) + " malformed request: " + JSON.stringify(log_buffer));
-    }
+    return;
   }
 
+  var log = request.extract_message();
+  log_buffer.id = Math.uuid();
+  log_buffer.severity = log.severity;
+  log_buffer.message  = log.message;
+
+  response.writeHead(200); // HTTP 200 OK
   response.end();
+
+  // emit message event
+  emitter.emit("log", log_buffer.severity, log_buffer.message);
+
+  if(DEBUG)
+    console.log((new Date().getTime()) + " received request: " + JSON.stringify(log_buffer));
 }).listen(config.log_port, HOST);
 sys.puts("Event capture daemon started at http://" + HOST + ":" + config.log_port);
 
@@ -87,4 +97,4 @@ var http_broadcast = http.createServer(function(request, response) {
   response.writeHead(200, { "Content-Type": "application/json" });
   response.end(JSON.stringify(log_buffer));
 }).listen(config.broadcast_http_port, HOST);
-sys.puts("Event HTTP broadcast daemon started at " + config.bind_ip + ":" + config.broadcast_http_port);
+sys.puts("Event HTTP broadcast daemon started at " + HOST + ":" + config.broadcast_http_port);

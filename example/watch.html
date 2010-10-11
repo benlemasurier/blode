@@ -132,7 +132,7 @@
                     new Ajax.Request('/proxy', {
                         onComplete: function(transport) {
                             var log = transport.responseJSON;
-                            if(log.id > last_id) {
+                            if(log.id !== last_id) {
                                 last_id = log.id;
                                 $('messages').insert({ top: "<ul><li class=\"severity " + log.severity + "\">" + log.severity + "</li><li class=\"message\">" + log.message + "</li></ul>" });
 
