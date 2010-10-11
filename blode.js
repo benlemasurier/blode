@@ -77,19 +77,29 @@ var http_broadcast = http.createServer(function(request, response) {
 // Listen to log events
 http.createServer(function(request, response) {
     var parameters = url.parse(request.url, true).query;
-    log.id++;
-    log.severity = parameters.severity;
-    log.message = parameters.message;
 
-    response.writeHead(200);
-    response.end();
+    try {
+      log.id++;
+      log.severity = parameters.severity;
+      log.message = parameters.message;
 
-    // emit message event
-    emitter.emit("log", log.id, log.severity, log.message);
+      // emit message event
+      emitter.emit("log", log.id, log.severity, log.message);
 
-    if(config.debug) {
-        console.log((new Date()) + " received request: " + JSON.stringify(log));
+      response.writeHead(200);
+
+      if(config.debug)
+        console.log((new Date().getTime()) + " received request: " + JSON.stringify(log));
+    } catch(error) {
+      console.log(error);
+      // Bad request
+      response.writeHead(400);
+
+      if(config.debug)
+        console.log((new Date().getTime()) + " malformed request: " + JSON.stringify(log));
     }
+
+    response.end();
 }).listen(config.log_port, config.bind_ip);
 
 sys.puts("Server started at http://" + config.bind_ip + ":" + config.log_port);
