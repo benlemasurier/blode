@@ -13,7 +13,6 @@
  *
  */
 
-require("./config.js");
 require("./lib.js");
 
 var config = {
@@ -32,14 +31,45 @@ var log_buffer = {
 
 var net     = require("net"),
     sys     = require("sys"),
-    http    = require("http"),
     url     = require("url"),
+    http    = require("http"),
     event   = require("events"),
     emitter = new event.EventEmitter;
 
 function Client(stream) {
     this.stream = stream;
 }
+
+// Listen to log events
+http.createServer(function(request, response) {
+    var parameters = url.parse(request.url, true).query;
+
+    try {
+      log_buffer.id++;
+      log_buffer.severity = parameters.severity;
+      log_buffer.message = parameters.message;
+
+      // HTTP 200 OK
+      response.writeHead(200);
+
+      // emit message event
+      emitter.emit("log", log_buffer.severity, log_buffer.message);
+
+      if(config.debug)
+        console.log((new Date().getTime()) + " received request: " + JSON.stringify(log_buffer));
+    } catch(error) {
+      // Bad request
+      response.writeHead(400);
+
+      if(config.debug) {
+        console.log(error);
+        console.log((new Date().getTime()) + " malformed request: " + JSON.stringify(log_buffer));
+      }
+    }
+
+    response.end();
+}).listen(config.log_port, config.bind_ip);
+sys.puts("Event capture daemon started at http://" + config.bind_ip + ":" + config.log_port);
 
 // Socket event broadcast
 var clients = [];
@@ -62,39 +92,11 @@ var server  = net.createServer(function(stream) {
     });
 });
 server.listen(config.broadcast_socket_port, config.bind_ip);
+sys.puts("Event socket broadcast daemon started at " + config.bind_ip + ":" + config.broadcast_socket_port);
 
 // HTTP event broadcast
 var http_broadcast = http.createServer(function(request, response) {
     response.writeHead(200, { "Content-Type": "application/json" });
     response.end(JSON.stringify(log_buffer));
 }).listen(config.broadcast_http_port, config.bind_ip);
-
-// Listen to log events
-http.createServer(function(request, response) {
-    var parameters = url.parse(request.url, true).query;
-
-    try {
-      log_buffer.id++;
-      log_buffer.severity = parameters.severity;
-      log_buffer.message = parameters.message;
-
-      // emit message event
-      emitter.emit("log", log_buffer.id, log_buffer.severity, log_buffer.message);
-
-      response.writeHead(200);
-
-      if(config.debug)
-        console.log((new Date().getTime()) + " received request: " + JSON.stringify(log_buffer));
-    } catch(error) {
-      console.log(error);
-      // Bad request
-      response.writeHead(400);
-
-      if(config.debug)
-        console.log((new Date().getTime()) + " malformed request: " + JSON.stringify(log_buffer));
-    }
-
-    response.end();
-}).listen(config.log_port, config.bind_ip);
-
-sys.puts("Server started at http://" + config.bind_ip + ":" + config.log_port);
+sys.puts("Event HTTP broadcast daemon started at " + config.bind_ip + ":" + config.broadcast_http_port);
