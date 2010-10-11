@@ -6,22 +6,16 @@
  * 6: info,    7: debug,  8: none
  */
 
-require("./lib.js");
-
-var config = {
-  bind_ip: "127.0.0.1",
-  log_port: 8000,
-  broadcast_socket_port: 8001,
-  broadcast_http_port: 8002,
-  debug: false
-};
+DEBUG = false;
+require("./lib");
 
 var net = require("net"),
     sys = require("sys"),
     url = require("url"),
     http = require("http"),
     event = require("events"),
-    emitter = new event.EventEmitter;
+    emitter = new event.EventEmitter,
+    config = require('./config').config;
 
 var log_buffer = {
   id: 0,
@@ -32,12 +26,6 @@ var log_buffer = {
 function Client(stream) {
   this.stream = stream;
 }
-
-// debugging on?
-process.argv.forEach(function(val, index, array) {
-  if(val === '-d')
-    config.debug = true;
-});
 
 // Listen to log events
 http.createServer(function(request, response) {
@@ -54,13 +42,13 @@ http.createServer(function(request, response) {
     // emit message event
     emitter.emit("log", log_buffer.severity, log_buffer.message);
 
-    if(config.debug)
-    console.log((new Date().getTime()) + " received request: " + JSON.stringify(log_buffer));
+    if(DEBUG)
+      console.log((new Date().getTime()) + " received request: " + JSON.stringify(log_buffer));
   } catch(error) {
     // Bad request
     response.writeHead(400);
 
-    if(config.debug) {
+    if(DEBUG) {
       console.log(error);
       console.log((new Date().getTime()) + " malformed request: " + JSON.stringify(log_buffer));
     }
