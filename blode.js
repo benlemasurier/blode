@@ -19,11 +19,7 @@ var net = require("net"),
     event = require("events"),
     emitter = new event.EventEmitter,
     config = require('./config').config,
-    log_buffer = { 
-      id: 0, 
-      severity: 'none', 
-      message:  '--MARK--' 
-    };
+    log_buffer = { id: 0, severity: 'none', message:  '--MARK--' };
 
 // Listen to log events
 http.createServer(function(request, response) {
@@ -32,12 +28,14 @@ http.createServer(function(request, response) {
   };
 
   request.is_valid = function() {
-    var query = this.extract_message();
-    if(typeof query.severity !== 'undefined' &&
-       typeof query.message !== 'undefined')
-      return(true);
-    else
-      return(false);
+    try {
+      var query = this.extract_message();
+      if(typeof query.severity !== 'undefined' &&
+         typeof query.message !== 'undefined')
+        return(true);
+      else
+        return(false);
+    } catch(error) { return(false) }
   };
 
   if(!request.is_valid()) {
@@ -82,15 +80,16 @@ var server  = net.createServer(function(stream) {
       client.stream.end();
     });
   });
-
-  emitter.on("log", function(severity, message) {
-    clients.forEach(function(client) {
-      client.stream.write(JSON.stringify(log_buffer) + "\r\n");
-    });
-  });
 });
 server.listen(config.broadcast_socket_port, HOST);
 sys.puts("Event socket broadcast daemon started at " + HOST + ":" + config.broadcast_socket_port);
+
+emitter.on("log", function(severity, message) {
+  clients.forEach(function(client) {
+    client.stream.write(JSON.stringify(log_buffer) + "\r\n");
+  });
+});
+
 
 // HTTP event broadcast
 var http_broadcast = http.createServer(function(request, response) {
