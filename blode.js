@@ -9,10 +9,11 @@
 DEBUG = false;
 HOST = "127.0.0.1";
 
-require("./lib/libblode");
 require("./lib/Math.uuid");
 
-var net = require("net"),
+var lib = require("./lib/libblode"),
+    ws = lib.websocket_server,
+    net = require("net"),
     sys = require("sys"),
     url = require("url"),
     http = require("http"),
@@ -20,6 +21,11 @@ var net = require("net"),
     emitter = new event.EventEmitter,
     config = require('./config').config,
     log_buffer = { id: 0, severity: 'none', message:  '--MARK--' };
+
+// test.
+ws.createServer(function(foo) {
+    console.log(foo);
+}).listen(8008, HOST);;
 
 // Listen to log events
 http.createServer(function(request, response) {

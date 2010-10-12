@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <title>websocket test.</title>
+    <script language="javascript">
+      if("WebSocket" in window) {
+        var ws = new WebSocket('ws://localhost:8008');
+        //var ws = new WebSocket('ws://websockets.org:8787/echo');
+        ws.onopen = function() {
+          console.log('connected to websocket');
+          ws.send("message to send");
+        };
+
+        ws.onmessage = function(evt) {
+          console.log('data: ');
+          console.log(evt.data);
+        };
+
+        ws.onclose = function(foo) {
+          console.log('close.');
+          console.log(foo);
+        };
+      } else {
+        console.log("yr browser sucks.");
+      }
+    </script>
+  </head>
+  <body>
+    hi.
+  </body>
+</html>
