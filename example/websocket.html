@@ -3,7 +3,7 @@
     <title>websocket test.</title>
     <script language="javascript">
       if("WebSocket" in window) {
-        var ws = new WebSocket('ws://localhost:8008');
+        var ws = new WebSocket('ws://localhost:8008/');
         //var ws = new WebSocket('ws://websockets.org:8787/echo');
         ws.onopen = function() {
           console.log('connected to websocket');
