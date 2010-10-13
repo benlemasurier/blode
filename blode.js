@@ -106,6 +106,7 @@ ws.createServer(function(websocket) {
     });
   });
 }).listen(8008);
+sys.puts("Event web socket broadcast daemon started at " + HOST + ":" + config.websocket_port);
 
 emitter.on("log", function(severity, message) {
   socket_clients.forEach(function(client) {
