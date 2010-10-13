@@ -1,30 +1,159 @@
 <html>
-  <head>
-    <title>websocket test.</title>
-    <script language="javascript">
-      if("WebSocket" in window) {
-        var ws = new WebSocket('ws://localhost:8008/');
-        //var ws = new WebSocket('ws://websockets.org:8787/echo');
-        ws.onopen = function() {
-          console.log('connected to websocket');
-          ws.send("message to send");
-        };
+    <head>
+        <title>test.</title>
+        <script src="prototype.js" type="text/javascript"></script>
+        <script src="scriptaculous.js?load=effects" type="text/javascript"></script>
+        <style type="text/css">
+            body {
+                font-family: helvetica, arial;
+                background-color: #eee;
+                margin: 0;
+                padding: 0;
+            }
 
-        ws.onmessage = function(evt) {
-          console.log('data: ');
-          console.log(evt.data);
-        };
+            ul { padding: 0; margin: 0; }
+            ul#messages { max-height: 320px; height: 320px; overflow: auto; }
+            ul#messages ul { border-bottom: solid 3px #333; }
+            ul#messages ul li { display: inline-block; padding: 5px 10px; }
+            ul#messages ul li.severity { width: 100px; color: #fff; font-weight: bold; }
+            ul#messages ul li.severity.emerge { 
+                background-color: red; 
+            }
+            ul#messages ul li.severity.alert {
+                background-color: orange;
+            }
+            ul#messages ul li.severity.crit {
+                background-color: #0066cc;
+            }
+            ul#messages ul li.severity.err {
+                background-color: #ffff00;
+            }
+            ul#messages ul li.severity.warning {
+                background-color: #660000;
+            }
+            ul#messages ul li.severity.notice {
+                background-color: #0099cc;
+            }
+            ul#messages ul li.severity.info {
+                background-color: #99cc00;
+            }
+            ul#messages ul li.severity.debug {
+                background-color: #999966;
+            }
+            ul#messages ul li.severity.none {
+                background-color: white;
+            }
+        </style>
+    </head>
 
-        ws.onclose = function(foo) {
-          console.log('close.');
-          console.log(foo);
-        };
-      } else {
-        console.log("yr browser sucks.");
-      }
-    </script>
-  </head>
-  <body>
-    hi.
-  </body>
+    <body>
+        <ul id="messages">
+        </ul>
+        
+        <script language="javascript">
+            document.observe("dom:loaded", function() {
+                function LogLevelYPixelLocation() {
+                   this.emerge = 10;
+                   this.alert = 50;
+                   this.crit = 90;
+                   this.err = 130;
+                   this.warning = 180;
+                   this.notice = 220;
+                   this.info = 260;
+                   this.debug = 300;
+                   this.none = 340;
+                }
+
+                function LogLevelCount() {
+                   this.emerge = 0;
+                   this.alert = 0;
+                   this.crit = 0;
+                   this.err = 0;
+                   this.warning = 0;
+                   this.notice = 0;
+                   this.info = 0;
+                   this.debug = 0;
+                   this.none = 0;
+                }
+
+                function LogLevelColors() {
+                   this.emerge = "red";
+                   this.alert = "orange";
+                   this.crit = "#0066cc";
+                   this.err = "#ffff00";
+                   this.warning = "#660000";
+                   this.notice = "#0099cc";
+                   this.info = "#99cc00";
+                   this.debug = "#999966";
+                   this.none = "white";
+                }
+
+                function LogLevelWidths() {
+                   this.emerge = 0;
+                   this.alert = 0;
+                   this.crit = 0;
+                   this.err = 0;
+                   this.warning = 0;
+                   this.notice = 0;
+                   this.info = 0;
+                   this.debug = 0;
+                   this.none = 0;
+                }
+
+                var last_id = 0,
+                    canvas = $('buzz'),
+                    decay = 2,
+                    log_levels = ["emerge", "alert", "crit", "err", "warning", "notice", "info", "debug", "none" ],
+                    level_location = new LogLevelYPixelLocation,
+                    level_counts = new LogLevelCount,
+                    level_colors = new LogLevelColors,
+                    level_widths = new LogLevelWidths;
+
+                window.setInterval(function() {
+                    var ctx = canvas.getContext('2d');
+
+                    log_levels.each(function(level) {
+                        // Clear rect for current level
+                        ctx.clearRect(0, level_location[level], canvas.width, 20);
+
+                        // Draw rect
+                        ctx.fillStyle = level_colors[level];
+                        ctx.fillRect(0, level_location[level], level_widths[level], 20);  
+
+                        // bar decay
+                        if(level_widths[level] > decay) {
+                            level_widths[level] -= decay;
+                        }
+                    });
+                }, 100);
+
+                var ws = new WebSocket('ws://localhost:8008');
+                ws.onmessage = function(evt) {
+                  var log = evt.data.evalJSON();
+                  if(log.id !== last_id) {
+                      last_id = log.id;
+                      $('messages').insert({ top: "<ul><li class=\"severity " + log.severity + "\">" + log.severity + "</li><li class=\"message\">" + log.message + "</li></ul>" });
+
+                      $('messages').childElements().each(function(message) {
+                          if(message.viewportOffset().top > ($('messages').getDimensions().height - message.getDimensions().height)) {
+                              message.remove();
+                          }
+                      });
+
+                      // canvas stuff. (never done this..)
+                      if(canvas.getContext) {
+                          if(level_widths[log.severity] < canvas.width) {
+                              level_widths[log.severity] += 200;
+                          }
+                          level_counts[log.severity]++;
+                      } else {
+                          canvas.innerHTML = 'yr browser sucks.';
+                      }
+                  }
+                };
+            });
+        </script>
+
+        <canvas id="buzz" width="800" height="400px"></canvas>
+    </body>
 </html>

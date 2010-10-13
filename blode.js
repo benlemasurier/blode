@@ -12,6 +12,7 @@ HOST = "127.0.0.1";
 require("./lib/Math.uuid");
 
 var lib = require("./lib/libblode"),
+    ws  = require("./lib/ws"),
     net = require("net"),
     sys = require("sys"),
     url = require("url"),
@@ -68,15 +69,15 @@ sys.puts("Event capture daemon started at http://" + HOST + ":" + config.log_por
 function Client(stream) {
   this.stream = stream;
 }
-var clients = [];
+var socket_clients = [];
 var server  = net.createServer(function(stream) {
   stream.setEncoding('utf8');
   stream.on("connect", function() {
     var client = new Client(stream);
-    clients.push(client);
+    socket_clients.push(client);
 
     stream.on('end', function() {
-      clients.remove(client);
+      socket_clients.remove(client);
       client.stream.end();
     });
   });
@@ -84,16 +85,34 @@ var server  = net.createServer(function(stream) {
 server.listen(config.broadcast_socket_port, HOST);
 sys.puts("Event socket broadcast daemon started at " + HOST + ":" + config.broadcast_socket_port);
 
-emitter.on("log", function(severity, message) {
-  clients.forEach(function(client) {
-    client.stream.write(JSON.stringify(log_buffer) + "\r\n");
-  });
-});
-
-
 // HTTP event broadcast
 var http_broadcast = http.createServer(function(request, response) {
   response.writeHead(200, { "Content-Type": "application/json" });
   response.end(JSON.stringify(log_buffer));
 }).listen(config.broadcast_http_port, HOST);
 sys.puts("Event HTTP broadcast daemon started at " + HOST + ":" + config.broadcast_http_port);
+
+// Websocket event broadcast
+ws_clients = [];
+ws.createServer(function(websocket) {
+  var listener = null;
+
+  websocket.addListener("connect", function() {
+    var client = new Client(websocket);
+    ws_clients.push(client);
+
+    websocket.addListener("end", function() {
+      ws_clients.remove(client);
+    });
+  });
+}).listen(8008);
+
+emitter.on("log", function(severity, message) {
+  socket_clients.forEach(function(client) {
+    client.stream.write(JSON.stringify(log_buffer) + "\r\n");
+  });
+
+  ws_clients.forEach(function(client) {
+    client.stream.write(JSON.stringify(log_buffer) + "\r\n");
+  });
+});
