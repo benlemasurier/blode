@@ -1,0 +1,103 @@
+var BlodeSocket = Class.create({
+  initialize: function() {
+    // event broadcast element
+    this._event = null;
+
+    // my websocket
+    this._socket = null;
+  },
+
+  listen: function(host, port) {
+    this._event = new Element('event');
+    this._socket = new WebSocket('ws://' + host + ':' + port);
+    this._socket.onmessage = function(message) {
+      this._event.fire('blode:message', message.data.evalJSON());
+    }.bind(this);
+
+    return this._event;
+  }
+});
+
+var BlodeBird = Class.create({
+  initialize: function(container_id) {
+    this.log_buffer = [];
+    for(i = 0; i < 60; i++) {
+      this.log_buffer[i] = 0;
+    }
+
+    this._container = $(container_id);
+    this._canvas = this.init_canvas(this._container);
+    this._socket = new BlodeSocket().listen('localhost', '8008');
+    this._last_second = 0;
+
+    this.bar_width = 5;
+    this.bar_padding = 5;
+
+    // start listening
+    this.listen(this.log_message);
+
+    // Start drawing
+    window.setInterval(function() { 
+      this.redraw(); 
+    }.bind(this), 10);
+  },
+
+  init_canvas: function(container) {
+    var canvas = new Element('canvas', { width:  this._container.getWidth(), 
+                                         height: this._container.getHeight() });
+    container.insert(canvas);
+
+    return canvas;
+  },
+
+  listen: function(callback) {
+    this._socket.observe("blode:message", function(data) {
+      callback.call(this, data.memo);
+    }.bind(this));
+  },
+
+  log_message: function(message) {
+    var current_second = new Date().getSeconds();
+
+    if(current_second !== this._last_second) {
+      this.log_buffer[current_second] = 0;
+      this._last_second = current_second;
+    }
+
+    this.log_buffer[current_second] += 1;
+  },
+
+  sort_log: function(start_index, log) {
+    var sorted = [],
+        head = [],
+        tail = [];
+
+    head = log.slice(0, start_index + 1).reverse();
+    tail = log.slice(start_index);
+
+    var sorted = sorted.concat(head, tail.reverse());
+
+    return(sorted);
+  },
+
+  redraw: function() {
+    var context = this._canvas.getContext('2d');
+
+    // clear canvas
+    context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+    // draw a pretty.
+    var now = new Date().getSeconds();
+    var start_x = this._canvas.width, start_y;
+    var sorted = this.sort_log(now, this.log_buffer);
+    for(var i = 0; i < this.log_buffer.length; i++) {
+      context.fillStyle = "rgba(192, 0, 0, 1)";
+      start_x -= this.bar_width;
+      start_y = this._canvas.height - sorted[i] || this._canvas.height;
+
+      context.fillRect(start_x, start_y, this.bar_width, sorted[i] || this._canvas.height);
+
+      start_x -= this.bar_padding;
+    }
+  }
+});

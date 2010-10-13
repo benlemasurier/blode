@@ -1,0 +1,21 @@
+<html>
+  <head>
+      <script src="prototype.js" type="text/javascript"></script>
+      <script src="draw_blode.js" type="text/javascript"></script>
+      <style>
+        body { font-family: helvetica, arial; }
+        h1 { font-size: 72px; font-weight: bold; }
+        #visualization { width: 100%; height: 500px; }
+      </style>
+      <script language="javascript">
+        window.onload = function() {
+          window.bb = new BlodeBird("visualization");
+        };
+      </script>
+  </head>
+  <body>
+    <h1>hits are pretties</h1>
+    <div id="visualization">
+    </div>
+  </body>
+</html>
