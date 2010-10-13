@@ -39,7 +39,7 @@ var BlodeBird = Class.create({
     // Start drawing
     window.setInterval(function() { 
       this.redraw(); 
-    }.bind(this), 10);
+    }.bind(this), 1);
   },
 
   init_canvas: function(container) {
@@ -91,10 +91,15 @@ var BlodeBird = Class.create({
     var start_x = this._canvas.width, start_y;
     var sorted = this.sort_log(now, this.log_buffer);
     for(var i = 0; i < this.log_buffer.length; i++) {
-      context.fillStyle = "rgba(192, 0, 0, 1)";
       start_x -= this.bar_width;
       start_y = this._canvas.height - sorted[i] || this._canvas.height;
 
+      // background
+      context.fillStyle = "rgba(0, 0, 0, 0.2)";
+      context.fillRect(start_x, 0, this.bar_width, this._canvas.height);
+      
+      // foreground.
+      context.fillStyle = "rgba(192, 0, 0, 1)";
       context.fillRect(start_x, start_y, this.bar_width, sorted[i] || this._canvas.height);
 
       start_x -= this.bar_padding;
