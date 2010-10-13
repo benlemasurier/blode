@@ -102,7 +102,7 @@
 
                 var last_id = 0,
                     canvas = $('buzz'),
-                    decay = 2,
+                    decay = 0.4,
                     log_levels = ["emerge", "alert", "crit", "err", "warning", "notice", "info", "debug", "none" ],
                     level_location = new LogLevelYPixelLocation,
                     level_counts = new LogLevelCount,
@@ -125,7 +125,7 @@
                             level_widths[level] -= decay;
                         }
                     });
-                }, 100);
+                }, 1);
 
                 var ws = new WebSocket('ws://localhost:8008');
                 ws.onmessage = function(evt) {
@@ -143,7 +143,7 @@
                       // canvas stuff. (never done this..)
                       if(canvas.getContext) {
                           if(level_widths[log.severity] < canvas.width) {
-                              level_widths[log.severity] += 200;
+                              level_widths[log.severity] = canvas.width;
                           }
                           level_counts[log.severity]++;
                       } else {
