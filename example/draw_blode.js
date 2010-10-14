@@ -27,6 +27,12 @@ var BlodeBird = Class.create({
 
     this._container = $(container_id);
     this._canvas = this.init_canvas(this._container);
+
+    this._text_canvas = this.init_canvas(this._container);
+    this._text_canvas.style.position = 'absolute';
+    this._text_canvas.clonePosition(this._canvas);
+
+    this._text_canvas.style.zIndex = 2;
     this._socket = new BlodeSocket().listen('localhost', '8008');
     this._last_second = 0;
 
@@ -61,8 +67,9 @@ var BlodeBird = Class.create({
   resize: function() {
     this._canvas.width = this._container.getWidth();
     this._canvas.height = this._container.getHeight();
-    this.bar_width = Math.floor(this._canvas.width / 60) / 2;
-    this.bar_padding = this.bar_width;
+    this.bar_width = (this._canvas.width / 60) / 2;
+    this.bar_padding = this.bar_width / 2;
+    this.bar_width += this.bar_padding;
   },
 
   listen: function(callback) {
@@ -90,7 +97,7 @@ var BlodeBird = Class.create({
 
   scale_log: function(log_buffer) {
     // this doesnt work quite right, yet.
-    var max = this._canvas.height - 1,
+    var max = this._canvas.height - 20, // leave some room for text.
         log_max = 0,
         scale_factor = 1;
 
@@ -120,9 +127,11 @@ var BlodeBird = Class.create({
 
   redraw: function() {
     var context = this._canvas.getContext('2d');
+    var txt_context = this._text_canvas.getContext('2d');
 
     // clear canvas
     context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+    txt_context.clearRect(0, 0, this._text_canvas.width, this._text_canvas.height);
 
     // draw a pretty (graph).
     var now = new Date().getSeconds(),
@@ -130,6 +139,7 @@ var BlodeBird = Class.create({
         start_y;
         scaled = this.scale_log(this.log_buffer.slice());
         sorted = this.sort_log(now, scaled.slice());
+        sorted_not_scaled = this.sort_log(now, this.log_buffer.slice());
     for(var i = 0; i < this.log_buffer.length; i++) {
       start_x -= this.bar_width;
       start_y = this._canvas.height - sorted[i] || this._canvas.height;
@@ -143,9 +153,11 @@ var BlodeBird = Class.create({
       context.fillRect(start_x, start_y, this.bar_width, sorted[i] || this._canvas.height);
       
       // display count
-      /* this doesn't work quite right, yet.
-      if(sorted[i] > 0)
-        context.fillText(sorted[i], start_x, start_y - 10);
+      /* this doesn't work quite right yet.
+      if(sorted[i] > 0) {
+        txt_context.fillStyle = "rgba(0, 0, 0, 1)";
+        txt_context.fillText(sorted_not_scaled[i], start_x, start_y - 10, this.bar_width);
+      }
       */
 
       // apply padding
