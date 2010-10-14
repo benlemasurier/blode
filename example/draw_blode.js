@@ -89,8 +89,8 @@ var BlodeBird = Class.create({
   },
 
   scale_log: function(log_buffer) {
-    /* // this doesnt work quite right, yet.
-    var max = this._canvas.height,
+    // this doesnt work quite right, yet.
+    var max = this._canvas.height - 1,
         log_max = 0,
         scale_factor = 1;
 
@@ -112,10 +112,9 @@ var BlodeBird = Class.create({
 
     // scale entire log buffer
     for(i = 0; i < log_buffer.length; i++) {
-      log_buffer[i] = log_buffer[i] * scale_factor;
+      log_buffer[i] = Math.floor(log_buffer[i] * scale_factor);
     }
 
-    */
     return(log_buffer);
   },
 
@@ -130,7 +129,7 @@ var BlodeBird = Class.create({
         start_x = this._canvas.width,
         start_y;
         scaled = this.scale_log(this.log_buffer.slice());
-        sorted = this.sort_log(now, scaled);
+        sorted = this.sort_log(now, scaled.slice());
     for(var i = 0; i < this.log_buffer.length; i++) {
       start_x -= this.bar_width;
       start_y = this._canvas.height - sorted[i] || this._canvas.height;

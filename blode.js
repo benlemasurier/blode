@@ -113,11 +113,11 @@ emitter.on("log", function(severity, message) {
     client.stream.write(JSON.stringify(log_buffer) + "\r\n");
   });
 
-  ws_clients.forEach(function(client) {
-    try {
+  try {
+    ws_clients.forEach(function(client) {
       client.stream.write(JSON.stringify(log_buffer) + "\r\n");
-    } catch(e) {
-      console.log(e);
-    }
-  });
+    });
+  } catch(e) {
+    console.log(e);
+  }
 });
