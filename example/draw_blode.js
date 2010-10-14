@@ -103,6 +103,10 @@ var BlodeBird = Class.create({
 
     // find largest value in log.
     for(i = 0; i < log_buffer.length; i++) {
+      // no undefined values.
+      if(isNaN(log_buffer[i]))
+        log_buffer[i] = 0;
+        
       // nothing can be larger than the max
       if(log_buffer[i] > max)
         log_buffer[i] = max;
