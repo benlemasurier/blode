@@ -99,17 +99,25 @@ var BlodeBird = Class.create({
     var start_x = this._canvas.width, start_y;
     var sorted = this.sort_log(now, this.log_buffer);
     for(var i = 0; i < this.log_buffer.length; i++) {
+      // draw graph
       start_x -= this.bar_width;
       start_y = this._canvas.height - sorted[i] || this._canvas.height;
 
       // background
       context.fillStyle = "rgba(0, 0, 0, 0.2)";
       context.fillRect(start_x, 0, this.bar_width, this._canvas.height);
-      
+       
       // foreground.
       context.fillStyle = "rgba(192, 0, 0, 1)";
       context.fillRect(start_x, start_y, this.bar_width, sorted[i] || this._canvas.height);
+      
+      // display count
+      /*
+      if(sorted[i] > 0)
+        context.fillText(sorted[i], start_x, start_y - 10);
+        */
 
+      // apply padding
       start_x -= this.bar_padding;
     }
   }
