@@ -30,11 +30,19 @@ var BlodeBird = Class.create({
     this._socket = new BlodeSocket().listen('localhost', '8008');
     this._last_second = 0;
 
-    this.bar_width = 5;
-    this.bar_padding = 5;
+    this.bar_width = 0;
+    this.bar_padding = 0;
+
+    // Calculate graph size
+    this.resize();
 
     // start listening
     this.listen(this.log_message);
+
+    // recalculate graph dimensions on window resize
+    window.onresize = function() {
+      this.resize();
+    }.bind(this);
 
     // Start drawing
     window.setInterval(function() { 
@@ -48,6 +56,13 @@ var BlodeBird = Class.create({
     container.insert(canvas);
 
     return canvas;
+  },
+
+  resize: function() {
+    this._canvas.width = this._container.getWidth();
+    this._canvas.height = this._container.getHeight();
+    this.bar_width = Math.floor(this._canvas.width / 60) / 2;
+    this.bar_padding = this.bar_width;
   },
 
   listen: function(callback) {
