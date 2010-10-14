@@ -47,7 +47,7 @@ var BlodeBird = Class.create({
     // Start drawing
     window.setInterval(function() { 
       this.redraw(); 
-    }.bind(this), 1);
+    }.bind(this), 100);
   },
 
   init_canvas: function(container) {
@@ -88,18 +88,50 @@ var BlodeBird = Class.create({
     return(log_buffer.slice(0, start_index + 1).reverse().concat(log_buffer.slice(start_index).reverse()));
   },
 
+  scale_log: function(log_buffer) {
+    /* // this doesnt work quite right, yet.
+    var max = this._canvas.height,
+        log_max = 0,
+        scale_factor = 1;
+
+    // find largest value in log.
+    for(i = 0; i < log_buffer.length; i++) {
+      // nothing can be larger than the max
+      if(log_buffer[i] > max)
+        log_buffer[i] = max;
+
+      if(log_buffer[i] > log_max) {
+        log_max = log_buffer[i];
+      }
+    }
+
+    // calculate scale
+    scale_factor = max / log_max;
+    if(scale_factor < 1)
+      scale_factor = 1;
+
+    // scale entire log buffer
+    for(i = 0; i < log_buffer.length; i++) {
+      log_buffer[i] = log_buffer[i] * scale_factor;
+    }
+
+    */
+    return(log_buffer);
+  },
+
   redraw: function() {
     var context = this._canvas.getContext('2d');
 
     // clear canvas
     context.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
-    // draw a pretty.
-    var now = new Date().getSeconds();
-    var start_x = this._canvas.width, start_y;
-    var sorted = this.sort_log(now, this.log_buffer);
+    // draw a pretty (graph).
+    var now = new Date().getSeconds(),
+        start_x = this._canvas.width,
+        start_y;
+        scaled = this.scale_log(this.log_buffer.slice());
+        sorted = this.sort_log(now, scaled);
     for(var i = 0; i < this.log_buffer.length; i++) {
-      // draw graph
       start_x -= this.bar_width;
       start_y = this._canvas.height - sorted[i] || this._canvas.height;
 
@@ -112,10 +144,10 @@ var BlodeBird = Class.create({
       context.fillRect(start_x, start_y, this.bar_width, sorted[i] || this._canvas.height);
       
       // display count
-      /*
+      /* this doesn't work quite right, yet.
       if(sorted[i] > 0)
         context.fillText(sorted[i], start_x, start_y - 10);
-        */
+      */
 
       // apply padding
       start_x -= this.bar_padding;
