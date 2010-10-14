@@ -67,17 +67,10 @@ var BlodeBird = Class.create({
     this.log_buffer[current_second] += 1;
   },
 
-  sort_log: function(start_index, log) {
-    var sorted = [],
-        head = [],
-        tail = [];
-
-    head = log.slice(0, start_index + 1).reverse();
-    tail = log.slice(start_index);
-
-    var sorted = sorted.concat(head, tail.reverse());
-
-    return(sorted);
+  // reorder the log, starting from the current time (e.g. 36 (seconds))
+  // and descend (in time) from there, rotating if required (e.g. [59, 0, 1, 2])
+  sort_log: function(start_index, log_buffer) {
+    return(log_buffer.slice(0, start_index + 1).reverse().concat(log_buffer.slice(start_index).reverse()));
   },
 
   redraw: function() {
