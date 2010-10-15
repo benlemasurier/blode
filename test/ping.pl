@@ -19,5 +19,5 @@ for(;;) {
     my $level = $levels[rand(8)];
     my $message = $random_string->randpattern("ccccccccccccccccccccccccccccc");
     print get("http://localhost:8000?severity=$level&message=test: $message");
-    usleep(100);
+    usleep(200);
 }
