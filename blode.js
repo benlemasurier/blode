@@ -80,6 +80,11 @@ var server  = net.createServer(function(stream) {
       socket_clients.remove(client);
       client.stream.end();
     });
+
+    stream.on('error', function() {
+      socket_clients.remove(client);
+      client.stream.end();
+    });
   });
 });
 server.listen(config.broadcast_socket_port, HOST);
@@ -104,20 +109,28 @@ ws.createServer(function(websocket) {
     websocket.addListener("end", function() {
       ws_clients.remove(client);
     });
+
+    websocket.addListener("error", function(error) {
+      ws_clients.remove(client);
+    });
   });
 }).listen(8008);
 sys.puts("Event web socket broadcast daemon started at " + HOST + ":" + config.websocket_port);
 
 emitter.on("log", function(severity, message) {
   socket_clients.forEach(function(client) {
-    client.stream.write(JSON.stringify(log_buffer) + "\r\n");
+    try {
+      client.stream.write(JSON.stringify(log_buffer) + "\r\n");
+    } catch(e) {
+      socket_clients.remove(client);
+    }
   });
 
-  try {
-    ws_clients.forEach(function(client) {
+  ws_clients.forEach(function(client) {
+    try {
       client.stream.write(JSON.stringify(log_buffer) + "\r\n");
-    });
-  } catch(e) {
-    console.log(e);
-  }
+    } catch(e) {
+      ws_clients.remove(client);
+    }
+  });
 });
