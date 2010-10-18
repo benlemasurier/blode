@@ -11,17 +11,19 @@ var BlodeGraph = Class.create({
     // color scheme
     this._bg_color = new Color('35', '91', '121', 100); // blue
     this._fg_color = new Color('100', '170', '208', 100); // lighter blue
+    this._legend_color = new Color('255', '255', '255', 100); // white
 
     // insert the graph canvas elements
     this._background = this.create_canvas(this._container, 0);
     this._foreground = this.create_canvas(this._container, 1);
+    this._legend     = this.create_canvas(this._container, 2);
 
     // prime the log buffer
     this.initialize_log_buffer();
 
     // render the background before we display any graph bars
     this.render_background();
- 
+
     // every "tick" rotate the log buffer and render the foreground
     window.setInterval(function() {
       // render foreground every "tick"
@@ -110,8 +112,9 @@ var BlodeGraph = Class.create({
     // set layer color
     context.fillStyle = "rgba(" + this._fg_color.toString() + ")";
 
-    // draw bar backgrounds
+    // draw scaled "bar" levels and render the scaled legend
     scaled = this.scale_log_buffer(this._log_buffer.slice());
+    this.render_legend(this.max_value_in_log(this._log_buffer));
     for(i = 0, j = scaled.length; i < j; i++) {
       x -= this._bar_width;
       y = (context.canvas.height - scaled[i]) || context.canvas.height;
@@ -121,20 +124,43 @@ var BlodeGraph = Class.create({
     }
   },
 
+  // testing. clean this up. a lot. (really, a ton.)
+  render_legend: function(max) {
+    var context = this._legend.getContext('2d');
+
+    // clear layer
+    context.clearRect(0, 0, this._legend.width, this._legend.height);
+
+    // legend background
+    context.fillStyle = "rgba(0, 0, 0, 0.7)";
+
+    // left side of legend
+    context.fillRect(0, 0, 30, context.canvas.getHeight());
+
+    // set layer color
+    context.fillStyle = "rgba(" + this._legend_color.toString() + ")";
+
+    // set the font
+    context.font = "bold 10px Helvetica, Arial";
+
+    // make things easier to measure (for me, anyway).
+    context.textBaseline = "top";
+    context.textAlign = "end";
+
+    // draw bar backgrounds
+    context.fillText(max, 25, 10);
+    context.fillText(0, 25, context.canvas.getHeight() - 20);
+
+    // console.log(context.measureText(max).width);
+  },
+
   scale_log_buffer: function(log_buffer) {
     var max = this._foreground.height - 1,
         log_max = 0,
         scale_factor = 1;
 
     // find largest value in log.
-    for(i = 0; i < log_buffer.length; i++) {
-      // no undefined values.
-      if(isNaN(log_buffer[i]))
-        log_buffer[i] = 0;
-        
-      if(log_buffer[i] > log_max)
-        log_max = log_buffer[i];
-    }
+    log_max = this.max_value_in_log(log_buffer);
 
     // calculate scale
     scale_factor = max / log_max;
@@ -144,6 +170,21 @@ var BlodeGraph = Class.create({
       log_buffer[i] = Math.floor(log_buffer[i] * scale_factor);
 
     return(log_buffer);
+  },
+
+  max_value_in_log: function(log_buffer) {
+    var log_max = 0;
+
+    for(i = 0; i < log_buffer.length; i++) {
+      // no undefined values.
+      if(isNaN(log_buffer[i]))
+        log_buffer[i] = 0;
+        
+      if(log_buffer[i] > log_max)
+        log_max = log_buffer[i];
+    }
+
+    return log_max;
   },
 
   log_buffer_size: function() {
