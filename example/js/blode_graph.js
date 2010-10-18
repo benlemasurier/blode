@@ -101,8 +101,8 @@ var BlodeGraph = Class.create({
     // The foreground layer consists of each bars value
     // rendering from right to left (most recent tick, descending)
     var context = this._foreground.getContext('2d'),
-    x = context.canvas.getWidth(),
-    y = 0;
+        x = context.canvas.getWidth(),
+        y = 0;
 
     // clear layer
     context.clearRect(0, 0, this._foreground.width, this._foreground.height);
