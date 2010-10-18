@@ -132,18 +132,16 @@ var BlodeGraph = Class.create({
       if(isNaN(log_buffer[i]))
         log_buffer[i] = 0;
         
-      if(log_buffer[i] > log_max) {
+      if(log_buffer[i] > log_max)
         log_max = log_buffer[i];
-      }
     }
 
     // calculate scale
     scale_factor = max / log_max;
 
     // scale entire log buffer
-    for(i = 0; i < log_buffer.length; i++) {
+    for(i = 0; i < log_buffer.length; i++)
       log_buffer[i] = Math.floor(log_buffer[i] * scale_factor);
-    }
 
     return(log_buffer);
   },
