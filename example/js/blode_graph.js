@@ -7,6 +7,7 @@ var BlodeGraph = Class.create({
     this._tick = 100; // 100ms
     this._log_buffer = [];
     this._socket = new BlodeSocket().listen('localhost', '8008');
+    this.show_legend = false;
 
     // color scheme
     this._bg_color = new Color('35', '91', '121', 100); // blue
@@ -28,6 +29,12 @@ var BlodeGraph = Class.create({
     window.setInterval(function() {
       // render foreground every "tick"
       this.render_foreground();
+      
+      // render legend
+      if(this.show_legend)
+        this.render_legend(this.max_value_in_log(this._log_buffer));
+      else
+        this.hide_legend();
 
       // insert a new (blank) buffer into the "current" tick
       this._log_buffer.unshift(new Array());
@@ -114,7 +121,6 @@ var BlodeGraph = Class.create({
 
     // draw scaled "bar" levels and render the scaled legend
     scaled = this.scale_log_buffer(this._log_buffer.slice());
-    this.render_legend(this.max_value_in_log(this._log_buffer));
     for(i = 0, j = scaled.length; i < j; i++) {
       x -= this._bar_width;
       y = (context.canvas.height - scaled[i]) || context.canvas.height;
@@ -147,11 +153,31 @@ var BlodeGraph = Class.create({
     context.textBaseline = "top";
     context.textAlign = "end";
 
-    // draw bar backgrounds
+    // hits legend
+    context.translate(10, context.canvas.getHeight() / 2);
+    context.rotate(-90 * (Math.PI / 180));
+    context.fillText("HITS", 0, 0);
+    context.rotate(90 * (Math.PI / 180));
+    context.translate(-10, -(context.canvas.getHeight() / 2));
+
+    // scale values
     context.fillText(max, 25, 10);
     context.fillText(0, 25, context.canvas.getHeight() - 20);
 
-    // console.log(context.measureText(max).width);
+    // time legend
+    // time legend background
+    context.fillStyle = "rgba(0, 0, 0, 0.7)";
+
+    // left side of legend
+    context.fillRect(30, context.canvas.getHeight() - 30, context.canvas.getWidth(), 30);
+    
+    context.textAlign = "center";
+    context.fillStyle = "rgba(" + this._legend_color.toString() + ")";
+    context.fillText("TIME (" + this._tick + "ms)", context.canvas.getWidth() / 2, context.canvas.getHeight() - 20);
+  },
+
+  hide_legend: function() {
+    this._legend.getContext('2d').clearRect(0, 0, this._legend.width, this._legend.height);
   },
 
   scale_log_buffer: function(log_buffer) {

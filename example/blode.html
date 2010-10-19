@@ -11,12 +11,25 @@
       <script language="javascript">
         window.onload = function() {
           window.graph = new BlodeGraph("visualization");
+
+          $('legend').observe('click', function() {
+            if(window.graph.show_legend) {
+              window.graph.show_legend = false;
+              $('legend').innerHTML = "show legend";
+            } else {
+              window.graph.show_legend = true;
+              $('legend').innerHTML = "hide legend";
+            }
+          });
         };
       </script>
   </head>
   <body>
     <h1>hits are pretties</h1>
-    <div id="visualization">
-    </div>
+    <p id="visualization">
+    </p>
+    <p id="controls">
+      <a id="legend" onclick="return(false);">show legend</a>
+    </p>
   </body>
 </html>
