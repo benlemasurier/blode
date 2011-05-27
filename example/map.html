@@ -1,0 +1,39 @@
+<!DOCTYPE html> 
+<html>
+  <head>
+    <title>Blode - hits are pretties</title>
+      <link rel="stylesheet" type="text/css" media="screen" href="css/map.css" /> 
+      <script src="js/prototype.js" type="text/javascript"></script>
+      <script src="js/jsonp.js" type="text/javascript"></script>
+      <script src="js/blode_helpers.js" type="text/javascript"></script>
+      <script src="js/blode_message.js" type="text/javascript"></script>
+      <script src="js/blode_socket.js" type="text/javascript"></script>
+      <script src="js/blode_map.js" type="text/javascript"></script>
+      <script language="javascript">
+        window.onload = function() {
+          $('visualization').setStyle({ height: $('visualization').getWidth() / 2 + "px"});
+          window.blode_map = new BlodeMap('visualization');
+
+          $('size_up').onclick = function() {
+            if(window.blode_map._point_size < 50)
+              window.blode_map._point_size++;
+          }
+
+          $('size_down').onclick = function() {
+            if(window.blode_map._point_size > 1)
+              window.blode_map._point_size--;
+          }
+        };
+      </script>
+  </head>
+  <body>
+    <h1>real-time visitors</h1>
+    <p id="visualization">
+    </p>
+    <p id="controls">
+      <div class="point_size">
+        point size: [ <span id="size_up">+</span> / <span id="size_down">-</span> ]
+      </div>
+    </p>
+  </body>
+</html>
