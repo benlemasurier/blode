@@ -23,6 +23,10 @@
             if(window.blode_map._point_size > 1)
               window.blode_map._point_size--;
           }
+
+          $('party_mode').onclick = function() {
+            window.blode_map.party_mode = (window.blode_map.party_mode) ? false : true;
+          }
         };
       </script>
   </head>
@@ -33,6 +37,9 @@
     <p id="controls">
       <div class="point_size">
         point size: [ <span id="size_up">+</span> / <span id="size_down">-</span> ]
+      </div>
+      <div class="party">
+        party mode: [ <input id="party_mode" type="checkbox" /> ]
       </div>
     </p>
   </body>

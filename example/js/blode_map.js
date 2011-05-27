@@ -18,11 +18,12 @@ var BlodeMap = Class.create({
     this._map_image = "images/world_map.jpg";
     this._background = this.create_canvas(this._container, 0);
     this._foreground = this.create_canvas(this._container, 1);
+    this.party_mode = false;
 
     this._point_size = 2;
+    this._point_color = "rgba(255, 0, 0, 0.5)";
     this._point_buffer = [];
     this._point_buffer_size = 1000;
-    this._point_color = "rgba(255, 0, 0, 0.5)";
 
     // prime the point buffer
     this.initialize_point_buffer();
@@ -87,11 +88,14 @@ var BlodeMap = Class.create({
     // clear layer
     context.clearRect(0, 0, this._foreground.width, this._foreground.height);
 
-    // set layer color
-    context.fillStyle = this._point_color;
-
     for(i = 0, j = this._point_buffer_size; i < j; i++) {
       if(this._point_buffer[i].x != 0 && this._point_buffer[i].y != 0) {
+        // set layer color
+        if(this.party_mode)
+          context.fillStyle = this.select_random_color();
+        else
+          context.fillStyle = this._point_color;
+
         var point_size = (i == 0) ? this._point_size * 2 : this._point_size;
         context.beginPath();
         context.arc(this._point_buffer[i].x - (point_size / 2),
@@ -127,5 +131,9 @@ var BlodeMap = Class.create({
     this._point_buffer = this._point_buffer.slice(0, -1);  
 
     this.render_foreground();
+  },
+
+  select_random_color: function(index) {
+    return("rgba(" + Math.floor(Math.random() * 255) + ", " + Math.floor(Math.random() * 255) + ", " + Math.floor(Math.random() * 255) + ", 0.5)");
   }
 });
