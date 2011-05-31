@@ -4,6 +4,13 @@ var Point = Class.create({
     this.y = y;
   },
 
+  equals: function(point) {
+    if(this.x === point.x && this.y === point.y)
+      return(true);
+
+    return(false);
+  },
+
   toString: function() {
     return "(" + this.x + ", " + this.y + ")";
   }
@@ -92,7 +99,7 @@ var BlodeMap = Class.create({
       if(this._point_buffer[i].x != 0 && this._point_buffer[i].y != 0) {
         // set layer color
         if(this.party_mode)
-          context.fillStyle = this.select_random_color();
+          context.fillStyle = this.random_color();
         else
           context.fillStyle = this._point_color;
 
@@ -124,8 +131,15 @@ var BlodeMap = Class.create({
     var x = (this._foreground.width * (lon - minX)) / (maxX - minX),
         y = this._foreground.height - ((this._foreground.height * (lat - minY)) / (maxY - minY));
 
+    var point = new Point(x, y);
+
+    // Only log unique entries
+    if(this.point_exists(point)) {
+      return(false);
+    }
+
     // insert the new piont into the buffer
-    this._point_buffer.unshift(new Point(x, y));
+    this._point_buffer.unshift(point);
 
     // remove the last item from the buffer
     this._point_buffer = this._point_buffer.slice(0, -1);  
@@ -133,7 +147,20 @@ var BlodeMap = Class.create({
     this.render_foreground();
   },
 
-  select_random_color: function(index) {
+  point_exists: function(point) {
+    var exists = false;
+
+    this._point_buffer.each(function(item) {
+      if(item.equals(point)) {
+        exists = true;
+        return(true);
+      }
+    });
+
+    return(exists);
+  },
+
+  random_color: function(index) {
     return("rgba(" + Math.floor(Math.random() * 255) + ", " + Math.floor(Math.random() * 255) + ", " + Math.floor(Math.random() * 255) + ", 0.5)");
   }
 });
