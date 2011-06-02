@@ -29,6 +29,10 @@
             window.blode_map.party_mode = (window.blode_map.party_mode) ? false : true;
           }
 
+          $('crosshair').onclick = function() {
+            window.blode_map.crosshair_enabled = (window.blode_map.crosshair_enabled) ? false : true;
+          }
+
           $('heatmap').onclick = function() {
             if(window.blode_map.heatmap_enabled) {
               window.blode_map.heatmap_enabled = false;
@@ -47,6 +51,9 @@
     <p id="controls">
       <div class="point_size">
         point size: [ <span id="size_up">+</span> / <span id="size_down">-</span> ]
+      </div>
+      <div class="crosshair">
+        crosshair: [ <input id="crosshair" type="checkbox" /> ]
       </div>
       <div class="party">
         party mode: [ <input id="party_mode" type="checkbox" /> ]

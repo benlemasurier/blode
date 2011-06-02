@@ -10,10 +10,12 @@ var BlodeMap = Class.create({
     this._heatmap_layer = null;
     this._heatmap = null;
     this.party_mode = false;
+    this.crosshair_enabled = false;
     this.heatmap_enabled = false;
 
     this._point_size = 2;
     this._point_color = "rgba(255, 0, 0, 0.5)";
+    this._crosshair_color = "rgba(0, 0, 0, 0.5)";
     this._point_buffer = {};
     this._point_buffer_size = 1000;
 
@@ -96,29 +98,53 @@ var BlodeMap = Class.create({
     // clear layer
     context.clearRect(0, 0, this._foreground.width, this._foreground.height);
 
+    if(this.crosshair_enabled)
+      this.render_crosshair();
+
     if(this.heatmap_enabled) {
       this.render_heatmap();
       return;
     }
 
     for(i = 0, j = this._point_buffer_size; i < j; i++) {
-      if(this._point_buffer.data[i].x != 0 && this._point_buffer.data[i].y != 0) {
-        // set layer color
-        if(this.party_mode)
-          context.fillStyle = this.random_color();
-        else
-          context.fillStyle = this._point_color;
+      var point_size = (i == 0) ? this._point_size * 2 : this._point_size;
 
-        var point_size = (i == 0) ? this._point_size * 2 : this._point_size;
-        context.beginPath();
-        context.arc(this._point_buffer.data[i].x - (point_size / 2),
-                    this._point_buffer.data[i].y - (point_size / 2),
-                    point_size,
-                    0, Math.PI * 2, true);
-        context.closePath();
-        context.fill();
-      }
+      // don't log render empty data
+      if(this._point_buffer.data[i].x == 0 && this._point_buffer.data[i].y == 0)
+        continue;
+
+      // set layer color
+      if(this.party_mode)
+        context.fillStyle = this.random_color();
+      else
+        context.fillStyle = this._point_color;
+
+      // draw circle
+      context.beginPath();
+      context.arc(this._point_buffer.data[i].x,
+                  this._point_buffer.data[i].y,
+                  point_size,
+                  0, Math.PI * 2, true);
+      context.closePath();
+      context.fill();
     }
+  },
+
+  render_crosshair: function() {
+    var context = this._foreground.getContext('2d');
+
+    context.beginPath();
+    context.strokeStyle = this._crosshair_color;
+    context.moveTo(this._point_buffer.data[0].x, this._point_buffer.data[0].y);
+    context.lineTo(this._point_buffer.data[0].x, 0); // top
+    context.moveTo(this._point_buffer.data[0].x, this._point_buffer.data[0].y);
+    context.lineTo(this._point_buffer.data[0].x, this._background.height); // bottom
+    context.moveTo(this._point_buffer.data[0].x, this._point_buffer.data[0].y);
+    context.lineTo(0, this._point_buffer.data[0].y);
+    context.moveTo(this._point_buffer.data[0].x, this._point_buffer.data[0].y);
+    context.lineTo(this._background.width, this._point_buffer.data[0].y);
+    context.closePath();
+    context.stroke();
   },
 
   render_heatmap: function() {
