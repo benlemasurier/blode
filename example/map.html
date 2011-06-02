@@ -5,6 +5,7 @@
       <link rel="stylesheet" type="text/css" media="screen" href="css/map.css" /> 
       <script src="js/prototype.js" type="text/javascript"></script>
       <script src="js/jsonp.js" type="text/javascript"></script>
+      <script src="js/heatmap.js" type="text/javascript"></script>
       <script src="js/blode_helpers.js" type="text/javascript"></script>
       <script src="js/blode_message.js" type="text/javascript"></script>
       <script src="js/blode_socket.js" type="text/javascript"></script>
@@ -27,6 +28,15 @@
           $('party_mode').onclick = function() {
             window.blode_map.party_mode = (window.blode_map.party_mode) ? false : true;
           }
+
+          $('heatmap').onclick = function() {
+            if(window.blode_map.heatmap_enabled) {
+              window.blode_map.heatmap_enabled = false;
+              window.blode_map._heatmap.store.setDataSet({ max: 1, data: [] });
+            } else {
+              window.blode_map.heatmap_enabled = true;
+            }
+          }
         };
       </script>
   </head>
@@ -40,6 +50,9 @@
       </div>
       <div class="party">
         party mode: [ <input id="party_mode" type="checkbox" /> ]
+      </div>
+      <div class="heatmap">
+        heatmap: [ <input id="heatmap" type="checkbox" /> ]
       </div>
     </p>
   </body>

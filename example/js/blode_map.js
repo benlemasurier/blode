@@ -1,21 +1,3 @@
-var Point = Class.create({
-  initialize: function(x, y) {
-    this.x = x;
-    this.y = y;
-  },
-
-  equals: function(point) {
-    if(this.x === point.x && this.y === point.y)
-      return(true);
-
-    return(false);
-  },
-
-  toString: function() {
-    return "(" + this.x + ", " + this.y + ")";
-  }
-});
-
 // Blode message graphing
 var BlodeMap = Class.create({
   initialize: function(container_id) {
@@ -25,15 +7,21 @@ var BlodeMap = Class.create({
     this._map_image = "images/world_map.jpg";
     this._background = this.create_canvas(this._container, 0);
     this._foreground = this.create_canvas(this._container, 1);
+    this._heatmap_layer = null;
+    this._heatmap = null;
     this.party_mode = false;
+    this.heatmap_enabled = false;
 
     this._point_size = 2;
     this._point_color = "rgba(255, 0, 0, 0.5)";
-    this._point_buffer = [];
+    this._point_buffer = {};
     this._point_buffer_size = 1000;
 
     // prime the point buffer
     this.initialize_point_buffer();
+
+    // setup heatmap
+    this.initialize_heatmap();
 
     this.render_background();
 
@@ -41,10 +29,23 @@ var BlodeMap = Class.create({
   },
 
   initialize_point_buffer: function() {
-    this._point_buffer = [];
+    this._point_buffer = { max: 1, data: [] };
 
     for(var i = 0; i < this._point_buffer_size; i++)
-      this._point_buffer[i] = new Point(0, 0);
+      this._point_buffer.data[i] = {x: 0, y: 0, count: 0};
+  },
+
+  initialize_heatmap: function() {
+    this._heatmap_layer = new Element("div");
+    this._heatmap_layer.style.posistion = "absolute";
+    this._heatmap_layer.clonePosition(this._background);
+    this._heatmap_layer.width = this._container.getWidth();
+    this._heatmap_layer.height = this._container.getWidth() / 2;
+
+    this._container.insert(this._heatmap_layer);
+
+    this._heatmap = h337.create({"element": this._heatmap_layer, "radius": 8, "visible":true, opacity: 25});
+    this._heatmap.store.setDataSet(this._point_buffer);
   },
 
   listen: function() {
@@ -95,8 +96,13 @@ var BlodeMap = Class.create({
     // clear layer
     context.clearRect(0, 0, this._foreground.width, this._foreground.height);
 
+    if(this.heatmap_enabled) {
+      this.render_heatmap();
+      return;
+    }
+
     for(i = 0, j = this._point_buffer_size; i < j; i++) {
-      if(this._point_buffer[i].x != 0 && this._point_buffer[i].y != 0) {
+      if(this._point_buffer.data[i].x != 0 && this._point_buffer.data[i].y != 0) {
         // set layer color
         if(this.party_mode)
           context.fillStyle = this.random_color();
@@ -105,14 +111,25 @@ var BlodeMap = Class.create({
 
         var point_size = (i == 0) ? this._point_size * 2 : this._point_size;
         context.beginPath();
-        context.arc(this._point_buffer[i].x - (point_size / 2),
-                    this._point_buffer[i].y - (point_size / 2),
+        context.arc(this._point_buffer.data[i].x - (point_size / 2),
+                    this._point_buffer.data[i].y - (point_size / 2),
                     point_size,
                     0, Math.PI * 2, true);
         context.closePath();
         context.fill();
       }
     }
+  },
+
+  render_heatmap: function() {
+    var max = 0;
+    this._point_buffer.data.each(function(point) {
+      if(point.count > max)
+        max = point.count;
+    });
+
+    this._point_buffer.max = max;
+    this._heatmap.store.setDataSet(this._point_buffer);
   },
 
   log_visitor: function(geo_data) {
@@ -131,18 +148,20 @@ var BlodeMap = Class.create({
     var x = (this._foreground.width * (lon - minX)) / (maxX - minX),
         y = this._foreground.height - ((this._foreground.height * (lat - minY)) / (maxY - minY));
 
-    var point = new Point(x, y);
+    var point = {x: x, y: y, count: 1};
 
-    // Only log unique entries
     if(this.point_exists(point)) {
-      return(false);
+      this._point_buffer.data.each(function(item) {
+        if(item.x == point.x && item.y == point.y)
+          item.count++;
+      });
+    } else {
+      // insert the new piont into the buffer
+      this._point_buffer.data.unshift(point);
+
+      // remove the last item from the buffer
+      this._point_buffer.data.data = this._point_buffer.data.slice(0, -1);  
     }
-
-    // insert the new piont into the buffer
-    this._point_buffer.unshift(point);
-
-    // remove the last item from the buffer
-    this._point_buffer = this._point_buffer.slice(0, -1);  
 
     this.render_foreground();
   },
@@ -150,8 +169,8 @@ var BlodeMap = Class.create({
   point_exists: function(point) {
     var exists = false;
 
-    this._point_buffer.each(function(item) {
-      if(item.equals(point)) {
+    this._point_buffer.data.each(function(item) {
+      if(item.x == point.x && item.y == point.y) {
         exists = true;
         return(true);
       }
