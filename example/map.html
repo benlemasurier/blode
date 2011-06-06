@@ -33,6 +33,14 @@
             window.blode_map.crosshair_enabled = (window.blode_map.crosshair_enabled) ? false : true;
           }
 
+          $('orders').onclick = function() {
+            window.blode_map.orders_enabled = (window.blode_map.orders_enabled) ? false : true;
+          }
+
+          $('shipments').onclick = function() {
+            window.blode_map.shipments_enabled = (window.blode_map.shipments_enabled) ? false : true;
+          }
+
           $('heatmap').onclick = function() {
             if(window.blode_map.heatmap_enabled) {
               window.blode_map.heatmap_enabled = false;
@@ -60,6 +68,12 @@
       </div>
       <div class="heatmap">
         heatmap: [ <input id="heatmap" type="checkbox" /> ]
+      </div>
+      <div class="orders">
+        orders: [ <input id="orders" type="checkbox" /> ]
+      </div>
+      <div class="shipments">
+        shipments: [ <input id="shipments" type="checkbox" /> ]
       </div>
     </p>
   </body>

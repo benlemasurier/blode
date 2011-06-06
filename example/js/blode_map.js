@@ -12,15 +12,27 @@ var BlodeMap = Class.create({
     this.party_mode = false;
     this.crosshair_enabled = false;
     this.heatmap_enabled = false;
+    this.orders_enabled = false;
+    this.shipments_enabled = false;
 
     this._point_size = 2;
     this._point_color = "rgba(255, 0, 0, 0.5)";
     this._crosshair_color = "rgba(0, 0, 0, 0.5)";
     this._point_buffer = {};
     this._point_buffer_size = 1000;
+    this._shipment_color = "rgba(0, 0, 255, 0.5)";
+    this._shipment_buffer = [];
+    this._shipment_buffer_size = 600;
+    this._order_color = "rgba(0, 255, 0, 0.5)";    
+    this._order_buffer = [];
+    this._order_buffer_size = 600;
 
-    // prime the point buffer
-    this.initialize_point_buffer();
+    this._sparkfun_lat = 40.064897;
+    this._sparkfun_long = -105.209941;
+
+
+    // prime the buffers
+    this.initialize_buffers();
 
     // setup heatmap
     this.initialize_heatmap();
@@ -30,11 +42,17 @@ var BlodeMap = Class.create({
     this.listen();
   },
 
-  initialize_point_buffer: function() {
+  initialize_buffers: function() {
     this._point_buffer = { max: 1, data: [] };
 
     for(var i = 0; i < this._point_buffer_size; i++)
       this._point_buffer.data[i] = {x: 0, y: 0, count: 0};
+
+    for(var i = 0; i < this._shipment_buffer_size; i++)
+      this._shipment_buffer[i] = {x: 0, y: 0};
+
+    for(var i = 0; i < this._order_buffer_size; i++)
+      this._order_buffer[i] = {x: 0, y: 0};
   },
 
   initialize_heatmap: function() {
@@ -57,6 +75,10 @@ var BlodeMap = Class.create({
         var ip = message.evalJSON().remote_addr;
         new Ajax.JSONRequest(this._geo_url + ip, {
         });
+      } else if(message.include('order.geocode')) {
+        this.log_order(message.evalJSON(),'order');
+      } else if(message.include('shipment.geocode')) {
+        this.log_order(message.evalJSON(),'shipment');
       }
     }.bind(this));
   },
@@ -106,6 +128,12 @@ var BlodeMap = Class.create({
       return;
     }
 
+    if(this.orders_enabled)
+      this.render_orders('order');
+
+    if(this.shipments_enabled)
+      this.render_orders('shipment');
+
     for(i = 0, j = this._point_buffer_size; i < j; i++) {
       var point_size = (i == 0) ? this._point_size * 2 : this._point_size;
 
@@ -147,6 +175,39 @@ var BlodeMap = Class.create({
     context.stroke();
   },
 
+  render_orders: function(type) {
+    var context = this._foreground.getContext('2d');
+    var buffer = (type == 'shippment' ? this._shipment_buffer : this._order_buffer);
+    var buffer_size = (type == 'shippment' ? this._shipment_buffer_size : this._order_buffer_size);
+
+    var minX = -180,
+        minY = -90,
+        maxX = 180,
+        maxY = 90;
+
+    var x = (this._foreground.width * (this._sparkfun_long - minX)) / (maxX - minX),
+        y = this._foreground.height - ((this._foreground.height * (this._sparkfun_lat - minY)) / (maxY - minY));
+
+    for(var i = 0; i < buffer_size; i++) {
+      if(buffer[i].x == 0 && buffer[i].y == 0)
+        continue;
+      
+      context.beginPath();
+
+      if(this.party_mode)
+        context.fillStyle = this.random_color();
+      else
+        context.fillStyle = (type == 'shippment' ? this._shipment_color : this._order_color);
+
+      context.moveTo(x,y); //sparkfun's location
+      context.lineTo(buffer[i].x, buffer[i].y);
+
+      context.closePath();
+      context.stroke();
+
+    }
+  },
+
   render_heatmap: function() {
     var max = 0;
     this._point_buffer.data.each(function(point) {
@@ -157,6 +218,36 @@ var BlodeMap = Class.create({
     this._point_buffer.max = max;
     this._heatmap.store.setDataSet(this._point_buffer);
   },
+
+  log_order: function(geo_data,type) {
+    var context = this._foreground.getContext('2d');
+    var minX = -180,
+        minY = -90,
+        maxX = 180,
+        maxY = 90;
+
+    var lon = geo_data.long,
+        lat = geo_data.lat;
+
+    if(lon == 0 || lat == 0)
+      return;
+
+    var x = (this._foreground.width * (lon - minX)) / (maxX - minX),
+        y = this._foreground.height - ((this._foreground.height * (lat - minY)) / (maxY - minY));
+
+    var point = {x: x, y: y};
+
+    if(type == 'shipment') {
+      this._shipment_buffer.unshift(point);
+      this._shipment_buffer = this._shipment_buffer.slice(0, -1);
+    } else if(type == 'order') {
+      this._order_buffer.unshift(point);
+      this._order_buffer = this._order_buffer.slice(0, -1);
+    }
+    
+    this.render_foreground();
+  },
+
 
   log_visitor: function(geo_data) {
     var context = this._foreground.getContext('2d');
