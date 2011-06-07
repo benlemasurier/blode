@@ -25,6 +25,10 @@
               window.blode_map._point_size--;
           }
 
+          $('hits').onclick = function() {
+            window.blode_map.hits_enabled = (window.blode_map.hits_enabled) ? false : true;
+          }
+
           $('party_mode').onclick = function() {
             window.blode_map.party_mode = (window.blode_map.party_mode) ? false : true;
           }
@@ -59,6 +63,9 @@
     <p id="controls">
       <div class="point_size">
         point size: [ <span id="size_up">+</span> / <span id="size_down">-</span> ]
+      </div>
+      <div class="hits">
+        hits: [ <input id="hits" type="checkbox" checked /> ]
       </div>
       <div class="crosshair">
         crosshair: [ <input id="crosshair" type="checkbox" /> ]

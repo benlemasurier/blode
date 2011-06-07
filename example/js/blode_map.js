@@ -9,6 +9,7 @@ var BlodeMap = Class.create({
     this._foreground = this.create_canvas(this._container, 1);
     this._heatmap_layer = null;
     this._heatmap = null;
+    this.hits_enabled = true;
     this.party_mode = false;
     this.crosshair_enabled = false;
     this.heatmap_enabled = false;
@@ -20,10 +21,10 @@ var BlodeMap = Class.create({
     this._crosshair_color = "rgba(0, 0, 0, 0.5)";
     this._point_buffer = {};
     this._point_buffer_size = 1000;
-    this._shipment_color = "rgba(0, 0, 255, 0.5)";
+    this._shipment_color = "rgba(0, 0, 255, 1)";
     this._shipment_buffer = [];
     this._shipment_buffer_size = 600;
-    this._order_color = "rgba(0, 255, 0, 0.5)";    
+    this._order_color = "rgba(0, 255, 0, 1)";    
     this._order_buffer = [];
     this._order_buffer_size = 600;
 
@@ -134,6 +135,15 @@ var BlodeMap = Class.create({
     if(this.shipments_enabled)
       this.render_orders('shipment');
 
+    if(this.hits_enabled)
+      this.render_hits();
+
+  },
+
+  render_hits: function() {
+
+    var context = this._foreground.getContext('2d');
+
     for(i = 0, j = this._point_buffer_size; i < j; i++) {
       var point_size = (i == 0) ? this._point_size * 2 : this._point_size;
 
@@ -156,6 +166,7 @@ var BlodeMap = Class.create({
       context.closePath();
       context.fill();
     }
+
   },
 
   render_crosshair: function() {
@@ -177,8 +188,17 @@ var BlodeMap = Class.create({
 
   render_orders: function(type) {
     var context = this._foreground.getContext('2d');
-    var buffer = (type == 'shippment' ? this._shipment_buffer : this._order_buffer);
-    var buffer_size = (type == 'shippment' ? this._shipment_buffer_size : this._order_buffer_size);
+    var buffer, buffer_size, color;
+
+    if(type == 'shipment') {
+      buffer = this._shipment_buffer;
+      buffer_size = this._shipment_buffer_size;
+      color = this._shipment_color;
+    } else {
+      buffer = this._order_buffer;
+      buffer_size = this._order_buffer_size;
+      color = this._order_color;
+    }
 
     var minX = -180,
         minY = -90,
@@ -195,9 +215,9 @@ var BlodeMap = Class.create({
       context.beginPath();
 
       if(this.party_mode)
-        context.fillStyle = this.random_color();
+        context.strokeStyle = this.random_color();
       else
-        context.fillStyle = (type == 'shippment' ? this._shipment_color : this._order_color);
+        context.strokeStyle = color;
 
       context.moveTo(x,y); //sparkfun's location
       context.lineTo(buffer[i].x, buffer[i].y);
