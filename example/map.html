@@ -25,12 +25,24 @@
               window.blode_map._point_size--;
           }
 
+          $('hits').onclick = function() {
+            window.blode_map.hits_enabled = (window.blode_map.hits_enabled) ? false : true;
+          }
+
           $('party_mode').onclick = function() {
             window.blode_map.party_mode = (window.blode_map.party_mode) ? false : true;
           }
 
           $('crosshair').onclick = function() {
             window.blode_map.crosshair_enabled = (window.blode_map.crosshair_enabled) ? false : true;
+          }
+
+          $('orders').onclick = function() {
+            window.blode_map.orders_enabled = (window.blode_map.orders_enabled) ? false : true;
+          }
+
+          $('shipments').onclick = function() {
+            window.blode_map.shipments_enabled = (window.blode_map.shipments_enabled) ? false : true;
           }
 
           $('heatmap').onclick = function() {
@@ -52,6 +64,9 @@
       <div class="point_size">
         point size: [ <span id="size_up">+</span> / <span id="size_down">-</span> ]
       </div>
+      <div class="hits">
+        hits: [ <input id="hits" type="checkbox" checked /> ]
+      </div>
       <div class="crosshair">
         crosshair: [ <input id="crosshair" type="checkbox" /> ]
       </div>
@@ -60,6 +75,12 @@
       </div>
       <div class="heatmap">
         heatmap: [ <input id="heatmap" type="checkbox" /> ]
+      </div>
+      <div class="orders">
+        orders: [ <input id="orders" type="checkbox" /> ]
+      </div>
+      <div class="shipments">
+        shipments: [ <input id="shipments" type="checkbox" /> ]
       </div>
     </p>
   </body>
