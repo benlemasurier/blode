@@ -21,10 +21,10 @@ var BlodeMap = Class.create({
     this._crosshair_color = "rgba(0, 0, 0, 0.5)";
     this._point_buffer = {};
     this._point_buffer_size = 1000;
-    this._shipment_color = "rgba(0, 0, 255, 1)";
+    this._shipment_color = "rgba(0, 0, 255, 0.5)";
     this._shipment_buffer = [];
     this._shipment_buffer_size = 600;
-    this._order_color = "rgba(0, 255, 0, 1)";    
+    this._order_color = "rgba(0, 255, 0, 0.5)";    
     this._order_buffer = [];
     this._order_buffer_size = 600;
 
@@ -297,7 +297,8 @@ var BlodeMap = Class.create({
       this._point_buffer.data.unshift(point);
 
       // remove the last item from the buffer
-      this._point_buffer.data.data = this._point_buffer.data.slice(0, -1);  
+      this._point_buffer.data = this._point_buffer.data.slice(0, -1);  
+
     }
 
     this.render_foreground();
