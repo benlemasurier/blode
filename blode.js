@@ -11,12 +11,13 @@ HOST = "127.0.0.1";
 
 require("./lib/Math.uuid");
 
-var lib = require("./lib/libblode"),
-    ws  = require("./lib/ws"),
-    net = require("net"),
-    sys = require("sys"),
-    url = require("url"),
-    http = require("http"),
+var lib =   require("./lib/libblode"),
+    ws  =   require("./lib/ws"),
+    net =   require("net"),
+    sys =   require("sys"),
+    url =   require("url"),
+    http =  require("http"),
+    dgram = require("dgram"),
     event = require("events"),
     emitter = new event.EventEmitter,
     config = require('./config').config,
@@ -62,10 +63,29 @@ http.createServer(function(request, response) {
 
   if(DEBUG)
     console.log((new Date().getTime()) + " received request: " + JSON.stringify(log_buffer));
-}).listen(config.log_port, HOST);
-sys.puts("Event capture daemon started at http://" + HOST + ":" + config.log_port);
+}).listen(config.http_log_port, HOST);
+sys.puts("Event HTTP capture daemon started at http://" + HOST + ":" + config.http_log_port);
 
-// Socket event broadcast
+// UDP event listener
+var udp_server = dgram.createSocket("udp4");
+udp_server.on("message", function (message, rinfo) {
+  if(DEBUG)
+    console.log("UDP listener got: " + message + " from " + rinfo.address + ":" + rinfo.port);
+
+  try {
+    var log = JSON.parse(message);
+    log_buffer.id = Math.uuid();
+    log_buffer.severity = log.severity;
+    log_buffer.message  = log.message;
+
+    // emit message event
+    emitter.emit("log", log_buffer.severity, log_buffer.message);
+  } catch(e) {}
+});
+udp_server.bind(config.dgram_log_port);
+sys.puts("Event UDP capture daemon started at http://" + HOST + ":" + config.dgram_log_port);
+
+// TCP socket event broadcast
 function Client(stream) {
   this.stream = stream;
 }
