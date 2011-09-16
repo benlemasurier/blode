@@ -52,6 +52,7 @@ http.createServer(function(request, response) {
 
   var log = request.extract_message();
   log_buffer.id = Math.uuid();
+  log_buffer.source = rinfo.address;
   log_buffer.severity = log.severity;
   log_buffer.message  = log.message;
 
@@ -75,6 +76,7 @@ udp_server.on("message", function (message, rinfo) {
   try {
     var log = JSON.parse(message);
     log_buffer.id = Math.uuid();
+    log_buffer.source = rinfo.address;
     log_buffer.severity = log.severity;
     log_buffer.message  = log.message;
 
