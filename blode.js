@@ -52,7 +52,6 @@ http.createServer(function(request, response) {
 
   var log = request.extract_message();
   log_buffer.id = Math.uuid();
-  log_buffer.source = rinfo.address;
   log_buffer.severity = log.severity;
   log_buffer.message  = log.message;
 
@@ -90,8 +89,22 @@ sys.puts("Event UDP capture daemon started at http://" + HOST + ":" + config.dgr
 // TCP socket event broadcast
 function Client(stream) {
   this.stream = stream;
+  this.broadcast_events = [
+    'none',
+    'debug',
+    'info',
+    'notice',
+    'warning',
+    'err',
+    'crit',
+    'alert',
+    'emerge'
+  ];
 }
+
 var socket_clients = [];
+var socket_buffer = '';
+
 var server  = net.createServer(function(stream) {
   stream.setEncoding('utf8');
   stream.on("connect", function() {
@@ -101,6 +114,24 @@ var server  = net.createServer(function(stream) {
     stream.on('end', function() {
       socket_clients.remove(client);
       client.stream.end();
+    });
+    
+    stream.on('data', function(data) {
+      socket_buffer += data;
+      var message = socket_buffer.indexOf("\r");
+      if (message !== -1) {     
+        var json = socket_buffer.slice(0, message);
+        try {  
+
+          var broadcast_events = JSON.parse(json);
+
+          if(broadcast_events instanceof Array)
+            client.broadcast_events = broadcast_events;
+
+        } catch(e) { }
+
+        socket_buffer = socket_buffer.slice(message + 1);
+      }
     });
 
     stream.on('error', function() {
@@ -142,7 +173,8 @@ sys.puts("Event web socket broadcast daemon started at " + HOST + ":" + config.w
 emitter.on("log", function(severity, message) {
   socket_clients.forEach(function(client) {
     try {
-      client.stream.write(JSON.stringify(log_buffer) + "\r\n");
+      if(client.broadcast_events.indexOf(severity) !== -1)
+        client.stream.write(JSON.stringify(log_buffer) + "\r\n");
     } catch(e) {
       socket_clients.remove(client);
     }
