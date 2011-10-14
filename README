@@ -1,3 +1,10 @@
+Requirements: node.js >= 0.4.12 
+              npm (npmjs.org :: `curl http://npmjs.org/install.sh | sudo sh`)
+
+Installation:
+              git clone git://github.com/benlemasurier/blode.git
+              sudo npm install websocket-server
+
 example visualization video: http://vimeo.com/20752495
 poor quality video: http://vimeo.com/15720253
 

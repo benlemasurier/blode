@@ -12,7 +12,7 @@ HOST = "127.0.0.1";
 require("./lib/Math.uuid");
 
 var lib =   require("./lib/libblode"),
-    ws  =   require("./lib/ws"),
+    ws  =   require("websocket-server"),
     net =   require("net"),
     sys =   require("sys"),
     url =   require("url"),
