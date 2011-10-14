@@ -151,23 +151,22 @@ var http_broadcast = http.createServer(function(request, response) {
 sys.puts("Event HTTP broadcast daemon started at " + HOST + ":" + config.broadcast_http_port);
 
 // Websocket event broadcast
-ws_clients = [];
-ws.createServer(function(websocket) {
-  var listener = null;
+var ws_clients = [];
+var ws_server = ws.createServer();
+ws_server.addListener("connection", function(connection) {
+  var listener = null,
+      client = new Client(connection);
 
-  websocket.addListener("connect", function() {
-    var client = new Client(websocket);
-    ws_clients.push(client);
-
-    websocket.addListener("end", function() {
-      ws_clients.remove(client);
-    });
-
-    websocket.addListener("error", function(error) {
-      ws_clients.remove(client);
-    });
+  ws_clients.push(client);
+  connection.addListener("end", function() {
+    ws_clients.remove(client);
   });
-}).listen(8008);
+
+  connection.addListener("error", function(error) {
+    ws_clients.remove(client);
+  });
+});
+ws_server.listen(8008);
 sys.puts("Event web socket broadcast daemon started at " + HOST + ":" + config.websocket_port);
 
 emitter.on("log", function(severity, message) {

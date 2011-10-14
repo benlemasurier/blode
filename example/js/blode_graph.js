@@ -6,7 +6,7 @@ var BlodeGraph = Class.create({
     this._bar_padding = 1;
     this._tick = 100; // 100ms
     this._log_buffer = [];
-    this._socket = new BlodeSocket().listen('10.10.10.2', '8008');
+    this._socket = new BlodeSocket().listen('127.0.0.1', '8008');
     this.show_legend = false;
 
     // color scheme
