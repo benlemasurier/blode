@@ -3,7 +3,7 @@ var BlodeMap = Class.create({
   initialize: function(container_id) {
     this._container = $(container_id);
     this._socket = new BlodeSocket().listen('10.10.10.2', '8008');
-    this._geo_url = "http://ben-dev/geoip/lookup.php?jsonp=window.blode_map.log_visitor&ip=";
+    this._geo_url = "http://ben-dev/geoip/lookup.php?ip=";
     this._map_image = "images/world_map.jpg";
     this._background = this.create_canvas(this._container, 0);
     this._foreground = this.create_canvas(this._container, 1);
@@ -72,14 +72,16 @@ var BlodeMap = Class.create({
   listen: function() {
     this._socket.observe('blode:message', function(data) {
       var message = data.memo.message();
-      if(message.include('app.run')) {
-        var ip = message.evalJSON().remote_addr;
+      if(message.event == 'app.run') {
+        var ip = message.remote_addr;
+        if(!ip.match(/127.0.0/) || !ip.match(/10.10.10/) || !ip.match(/192.168/))
+          return;
         new Ajax.JSONRequest(this._geo_url + ip, {
         });
-      } else if(message.include('order.geocode')) {
-        this.log_order(message.evalJSON(),'order');
-      } else if(message.include('shipment.geocode')) {
-        this.log_order(message.evalJSON(),'shipment');
+      } else if(message.event == 'order.geocode') {
+        this.log_order(message.order);
+      } else if(message.event == 'shipment.geocode') {
+        this.log_order(message.shipment);
       }
     }.bind(this));
   },

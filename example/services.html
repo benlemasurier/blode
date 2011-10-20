@@ -1,0 +1,189 @@
+<!DOCTYPE html> 
+<html>
+  <head>
+    <title>Blode - SparkFun</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script src="http://omnipotent.net/jquery.sparkline/1.6/jquery.sparkline.min.js"></script>
+    <style>
+      body {
+        font-family: Helvetica, Arial, sans-serif;
+        background-color: #333;
+        color: white;
+        margin: 0 40px;
+      }
+
+      header h1 {
+        font-size: 100px;
+        border-bottom: dashed 1px #eee;
+        margin-bottom: 30px;
+      }
+
+      div#main {
+        margin: 0px auto;
+        width: 90%;
+      }
+
+      section {
+        padding: 10px 20px;
+        border: dotted 1px #eee;
+        width: 280px;
+        float: left;
+        margin-right: 20px;
+        margin-bottom: 20px;
+      }
+
+      section.graph {
+        width: 965px;
+        height: 300px;
+      }
+
+      section h2 {
+        font-size: 40px;
+        text-transform: uppercase;
+        margin-bottom: 0;
+      }
+
+      section .blink {
+        background-color: #F03528;
+        width: 10px;
+        height: 10px;
+        float: right;
+        position: relative;
+        top: 70px;
+        right: -5px;
+      }
+
+      section p {
+        text-align: center;
+      }
+
+      section p span.value {
+        font-size: 45px;
+        font-weight: bold;
+        width: 100px;
+        text-align: right;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1><span style="color: #F03528">SPARKFUN</span>>COM</h1>
+    </header>
+    <div id="main">
+      <section>
+        <h2>Memcached</h2>
+        <div id="memcached-blink" class="blink" style="display: none">&nbsp;</div>
+        <p>
+          <span id="memcached_hps" class="value">0</span><sub>hits<sub>/<sub>sec</sub></sub></sub>
+        </p>
+      </section>
+      <section>
+        <h2>MySQL</h2>
+        <div id="mysql-blink" class="blink" style="display: none">&nbsp;</div>
+        <p>
+          <span id="mysql_qps" class="value">0</span><sub>queries<sub>/<sub>sec</sub></sub></sub>
+        </p>
+      </section>
+      <section>
+        <h2>Nginx</h2>
+        <div id="threads-blink" class="blink" style="display: none">&nbsp;</div>
+        <p>
+          <span id="threads" class="value">0</span><sub>threads<sub>/<sub>sec</sub></sub></sub>
+        </p>
+      </section>
+      <section class="graph">
+        <span id="sparkline"></span>
+      </section>
+    </div>
+  </body>
+  <script>
+    $(function() {
+      $(document).data('log_buffer', []);
+      $(document).data('log_buffer_index', 0);
+      $(document).data('memcached_hps', 0);
+      $(document).data('mysql_qps', 0);
+      $(document).data('threads', 0);
+
+      function update_display() {
+        $('#memcached_hps').text($(document).data('memcached_hps'));
+        $('#mysql_qps').text($(document).data('mysql_qps'));
+        $('#threads').text($(document).data('threads'));
+      }
+
+      function update_graph() {
+        var buffer = $(document).data('log_buffer'),
+            graph_values = [];
+
+        jQuery.each(buffer, function(idx, values) {
+          graph_values.push(values.length);
+        });
+
+        $('#sparkline').sparkline(graph_values, {
+          width: '965px',
+          height: '300px',
+          lineColor: '#eee',
+          fillColor: false
+        });
+      }
+
+      function init_log_buffer() {
+        var buffer = [];
+        for(var i = 0; i < 600; i++)
+          buffer[i] = [];
+
+        $(document).data('log_buffer', buffer);
+      }
+
+      var i = 0;
+      var ws = new WebSocket('ws://10.10.10.2:8008');
+      ws.onmessage = function(event) {
+        var data = jQuery.parseJSON(event.data);
+
+        var buffer = $(document).data('log_buffer');
+        buffer[0].push(1);
+
+        // memcached counter
+        if(typeof data.message == 'string' && (data.message.match(/cache hit/) != null)) {
+          var hps_count = $(document).data('memcached_hps') + 1;
+          $(document).data('memcached_hps', hps_count);
+          $('#memcached-blink').toggle();
+        }
+
+        // mysql qps
+        if(data.message.event == "query") {
+          var qps_count = $(document).data('mysql_qps') + 1;
+          $(document).data('mysql_qps', qps_count);
+          $('#mysql-blink').toggle();
+        }
+
+        // threads
+        if(data.message.event == "app.run") {
+          var threads = $(document).data('threads') + 1;
+          $(document).data('threads', threads);
+          $('#threads-blink').toggle();
+        }
+      };
+
+      init_log_buffer();
+      window.setInterval(function() {
+        update_display();
+
+        $(document).data('memcached_hps', 0);
+        $(document).data('mysql_qps', 0);
+        $(document).data('threads', 0);
+      }, 1000);
+
+      window.setInterval(function() {
+        update_graph();
+
+        var buffer = $(document).data('log_buffer');
+        // insert a new count at the front of the buffer
+        buffer.unshift([]);
+
+        // remove the last item from the buffer
+        buffer = buffer.pop();
+      }, 100);
+    });
+  </script>
+</html>
