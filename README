@@ -1,3 +1,5 @@
+Blode is a simple yet powerful syslog-like event server written in node.js
+
 Requirements: node.js >= 0.4.12 
               npm (npmjs.org :: `curl http://npmjs.org/install.sh | sudo sh`)
 
@@ -5,8 +7,8 @@ Installation:
               git clone git://github.com/benlemasurier/blode.git
               sudo npm install websocket-server
 
-example visualization video: http://vimeo.com/20752495
-poor quality video: http://vimeo.com/15720253
+example visualization (sparkfun web servers):   http://vimeo.com/30873952
+example visualization (sparkfun mysql queries): http://vimeo.com/20752495
 
 # start log server
 $ node blode.js
