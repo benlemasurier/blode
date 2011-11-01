@@ -1,6 +1,10 @@
 Blode is a simple, powerful syslog-like event broadcast daemon
 ==============================================================
 
+example visualization (sparkfun web servers):   http://vimeo.com/30873952
+example visualization (sparkfun mysql queries): http://vimeo.com/20752495
+
+
 It works like this
 ------------------
 
@@ -40,19 +44,25 @@ Installation
 ```
 git clone git://github.com/benlemasurier/blode.git
 sudo npm install websocket-server
+
+start blode daemon
+------------------
+```
+$ cd blode
+$ nohup node blode.js
 ```
 
-example visualization (sparkfun web servers):   http://vimeo.com/30873952
-example visualization (sparkfun mysql queries): http://vimeo.com/20752495
-
+start logging test events
+-------------------------
 ```
-# start log server
-$ node blode.js
-
-# start logging test events
 $ cd test
-$ ./ping &
+$ ./ping
+```
 
-# listen to events
-$ ./example_netcat_client.sh &
+listen to events
+----------------
+```
+# (from another terminal)
+$ cd ~/blode/test
+$ ./example_netcat_client.sh
 ```
