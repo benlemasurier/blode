@@ -35,9 +35,9 @@ the broadcast via a websocket, tcp, or udp connection.
 
 Requirements
 ------------
-node.js >= 0.4.12 
+[node.js](http://nodejs.org) >= 0.4.12 
 
-npm (npmjs.org :: `curl http://npmjs.org/install.sh | sudo sh`)
+[npm](npmjs.org) `curl http://npmjs.org/install.sh | sudo sh`
 
 Installation
 ------------
