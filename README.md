@@ -1,6 +1,8 @@
-Blode is a simple yet powerful syslog-like event server written in node.js
+Blode is a simple, powerful syslog-like event broadcast daemon
+==============================================================
 
-Basically, it works like this:
+It works like this
+------------------
 
       +--------+  +--------+  +--------+
       |  php   |  |  ruby  |  | syslog |    <-- event sources
@@ -30,6 +32,7 @@ the broadcast via a websocket, tcp, or udp connection.
 Requirements
 ------------
 node.js >= 0.4.12 
+
 npm (npmjs.org :: `curl http://npmjs.org/install.sh | sudo sh`)
 
 Installation
