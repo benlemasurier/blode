@@ -37,6 +37,7 @@ Installation:
 example visualization (sparkfun web servers):   http://vimeo.com/30873952
 example visualization (sparkfun mysql queries): http://vimeo.com/20752495
 
+```
 # start log server
 $ node blode.js
 
@@ -46,3 +47,4 @@ $ ./ping &
 
 # listen to events
 $ ./example_netcat_client.sh &
+```
