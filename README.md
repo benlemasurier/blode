@@ -45,6 +45,7 @@ Installation
 ```
 git clone git://github.com/benlemasurier/blode.git
 sudo npm install websocket-server
+```
 
 start blode daemon
 ------------------
