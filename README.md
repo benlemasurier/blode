@@ -1,8 +1,9 @@
 Blode is a simple, powerful syslog-like event broadcast daemon
 ==============================================================
 
-example visualization (sparkfun web servers):   http://vimeo.com/30873952
-example visualization (sparkfun mysql queries): http://vimeo.com/20752495
+[example visualization](http://vimeo.com/30873952) (SparkFun nginx/memcached/mysql)
+
+[example visualization](http://vimeo.com/20752495) (SparkFun MySQL queries/sec)
 
 
 It works like this
