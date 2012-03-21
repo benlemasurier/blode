@@ -2,19 +2,8 @@
  * Blode - a simple, powerful syslog-like event broadcast daemon
  * Copyright (C) 2010 Ben LeMasurier
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * This program can be distributed under the terms of the GNU GPL.
+ * See the file COPYING.
 */
 
 /*
@@ -30,14 +19,14 @@ HOST = "127.0.0.1";
 
 require("./lib/Math.uuid");
 
-var lib =   require("./lib/libblode"),
-    ws  =   require("websocket-server"),
-    net =   require("net"),
-    sys =   require("sys"),
-    url =   require("url"),
-    http =  require("http"),
-    dgram = require("dgram"),
-    event = require("events"),
+var util =   require("./lib/util"),
+    ws   =   require("websocket-server"),
+    net  =   require("net"),
+    sys  =   require("sys"),
+    url  =   require("url"),
+    http =   require("http"),
+    dgram =  require("dgram"),
+    event =  require("events"),
     emitter = new event.EventEmitter,
     config = require('./config').config,
     log_buffer = { id: 0, severity: 'none', message:  '--MARK--' };
@@ -134,13 +123,13 @@ var server  = net.createServer(function(stream) {
       socket_clients.remove(client);
       client.stream.end();
     });
-    
+
     stream.on('data', function(data) {
       socket_buffer += data;
       var message = socket_buffer.indexOf("\r");
-      if (message !== -1) {     
+      if (message !== -1) {
         var json = socket_buffer.slice(0, message);
-        try {  
+        try {
 
           var broadcast_events = JSON.parse(json);
 
