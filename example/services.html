@@ -4,6 +4,7 @@
     <title>Blode - SparkFun</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
     <script src="http://omnipotent.net/jquery.sparkline/1.6/jquery.sparkline.min.js"></script>
+    <script src="http://tuberculosis:8008/socket.io/socket.io.js"></script>
     <style>
       body {
         font-family: Helvetica, Arial, sans-serif;
@@ -135,10 +136,11 @@
         $(document).data('log_buffer', buffer);
       }
 
-      var i = 0;
-      var ws = new WebSocket('ws://10.10.10.2:8008');
-      ws.onmessage = function(event) {
-        var data = jQuery.parseJSON(event.data);
+      var i = 0,
+          socket = io.connect('http://tuberculosis:8008');
+      socket.on('message', function(event) {
+        var data = jQuery.parseJSON(event);
+        console.log(data);
 
         var buffer = $(document).data('log_buffer');
         buffer[0].push(1);
@@ -163,7 +165,7 @@
           $(document).data('threads', threads);
           $('#threads-blink').toggle();
         }
-      };
+      });
 
       init_log_buffer();
       window.setInterval(function() {

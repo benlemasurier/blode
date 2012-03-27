@@ -1,0 +1,11 @@
+body {
+  background-color: #111;
+  color: white;
+  font-family: helvetica, arial;
+  margin: 30px;
+}
+
+#blode {
+  height: 300px;
+}
+

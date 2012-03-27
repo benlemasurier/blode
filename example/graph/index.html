@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Blode - hits are pretties</title>
+    <link rel="stylesheet" type="text/css" media="screen" href="graph.css" />
+    <script src="http://tuberculosis:8008/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+  </head>
+
+  <body>
+    <h1>hits are pretties</h1>
+
+    <div id=blode></div>
+    <p>
+      <a id="legend" onclick="$(blode).graph('toggle_legend'); return(false);">show legend</a>
+    </p>
+
+  </body>
+
+  <script src="graph.js"></script>
+  <script>
+    $(document).ready(function() {
+      var blode = $('#blode').graph();
+    });
+  </script>
+
+</html>
