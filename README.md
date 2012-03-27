@@ -44,13 +44,13 @@ Installation
 ```
 git clone git://github.com/benlemasurier/blode.git
 cd blode
-sudo npm install websocket-server
+sudo npm install socket.io
 ```
 
 start blode daemon
 ------------------
 ```
-$ nohup node blode.js &
+$ nohup NODE_ENV=production node blode.js &
 ```
 
 start logging test events
