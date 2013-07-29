@@ -2,6 +2,7 @@ package main
 
 import (
   "github.com/nu7hatch/gouuid"
+  "io"
   "net"
   "bufio"
   "encoding/json"
@@ -35,13 +36,15 @@ func main() {
 
   tcp_conns := listen_conn_tcp(tcp_server)
 
+  log.Printf("TCP server started at %s\n", tcp_server.Addr())
+
   for {
     go handle_conn_tcp(<-tcp_conns)
   }
 }
 
 // Listen for TCP connections, once established push
-// connection to returned channel
+// connection to the returned channel
 func listen_conn_tcp(listener net.Listener) chan net.Conn {
   ch := make(chan net.Conn)
 
@@ -67,8 +70,14 @@ func handle_conn_tcp(client net.Conn) {
   for {
     line, err := b.ReadBytes('\n')
     if err != nil {
-      log.Println(err)
-      break; // FIXME: close connection?
+      if err == io.EOF {
+        log.Printf("disconnect: %s\n", client.RemoteAddr())
+      } else {
+        log.Printf("error reading from %s: %s\n", client.RemoteAddr(), err)
+      }
+
+      client.Close()
+      return
     }
 
     var msg Message
@@ -86,6 +95,6 @@ func handle_conn_tcp(client net.Conn) {
     // testing - echo data back to the client
     client.Write(line)
 
-    log.Println("Message Received: %v\n", msg)
+    log.Printf("Message Received: %v\n", msg)
   }
 }
