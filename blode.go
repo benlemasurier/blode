@@ -2,99 +2,155 @@ package main
 
 import (
   "github.com/nu7hatch/gouuid"
-  "io"
   "net"
   "bufio"
   "encoding/json"
   "log"
 )
 
-// RFC 5424 syslog severity levels
-// pretty sure this is the wrong way to do this
-const (
-  emerg  = iota // 0
-  alert  = iota // 1
-  crit   = iota // 2
-  err    = iota // 4
-  warn   = iota // 4
-  notice = iota // 5
-  info   = iota // 6
-  debug  = iota // 7
-)
+type Client struct {
+  incoming chan string
+  outgoing chan string
+  reader *bufio.Reader
+  writer *bufio.Writer
+}
 
-type Message struct {
+func (client *Client) Read() {
+  for {
+    line, _ := client.reader.ReadString('\n')
+    client.incoming <- line
+  }
+}
+
+func (client *Client) Write() {
+  for data := range client.outgoing {
+    client.writer.WriteString(data)
+    client.writer.Flush()
+  }
+}
+
+func (client *Client) Listen() {
+  go client.Read()
+  go client.Write()
+}
+
+func NewClient(conn net.Conn) *Client {
+  reader := bufio.NewReader(conn)
+  writer := bufio.NewWriter(conn)
+
+  client := &Client{
+    incoming: make(chan string),
+    outgoing: make(chan string),
+    reader: reader,
+    writer: writer,
+  }
+
+  client.Listen()
+
+  return client
+}
+
+type Stream struct {
+  clients []*Client
+  joins chan net.Conn
+  incoming chan string
+  outgoing chan string
+}
+
+func (stream *Stream) Broadcast(event *Event) {
+  for _, client := range stream.clients {
+    client.outgoing <- event.String()
+  }
+}
+
+func (stream *Stream) Join(conn net.Conn) {
+  client := NewClient(conn)
+  stream.clients = append(stream.clients, client)
+
+  go func() {
+    for {
+      stream.incoming <- <-client.incoming
+    }
+  }()
+}
+
+func (stream *Stream) Listen() {
+  go func() {
+    for {
+      select {
+      case data := <-stream.incoming:
+        event, err := NewEvent(data)
+        if err != nil {
+          log.Println(err)
+          continue
+        }
+
+        stream.Broadcast(event)
+      case conn := <-stream.joins:
+        stream.Join(conn)
+      }
+    }
+  }()
+}
+
+func NewStream() *Stream {
+  stream := &Stream{
+    clients: make([]*Client, 0),
+    joins: make(chan net.Conn),
+    incoming: make(chan string),
+    outgoing: make(chan string),
+  }
+
+  stream.Listen()
+
+  return stream
+}
+
+type Event struct {
   Id string
-  Severity uint8
+  Severity string
   Message string
 }
 
+func (event *Event) String() (string) {
+  data, err := json.Marshal(event)
+  if err != nil {
+    log.Println(err)
+  }
+
+  return string(data) + "\n"
+}
+
+func NewEvent(event string) (*Event, error) {
+  id, err := uuid.NewV4()
+  if err != nil {
+    log.Println(err)
+    return nil, err
+  }
+
+  e := new(Event)
+  json.Unmarshal([]byte(event), &e)
+  e.Id = id.String()
+
+  return e, nil
+}
+
 func main() {
+  stream := NewStream()
+
   tcp_server, err := net.Listen("tcp", ":8001")
   if err != nil {
     log.Fatal(err)
   }
 
-  tcp_conns := listen_conn_tcp(tcp_server)
-
-  log.Printf("TCP server started at %s\n", tcp_server.Addr())
-
   for {
-    go handle_conn_tcp(<-tcp_conns)
-  }
-}
-
-// Listen for TCP connections, once established push
-// connection to the returned channel
-func listen_conn_tcp(listener net.Listener) chan net.Conn {
-  ch := make(chan net.Conn)
-
-  go func() {
-    for {
-      client, err := listener.Accept()
-      if err != nil {
-        log.Println(err)
-        continue
-      }
-
-      log.Printf("%v <-> %v\n", client.LocalAddr(), client.RemoteAddr())
-      ch <- client
-    }
-  }()
-
-  return ch
-}
-
-func handle_conn_tcp(client net.Conn) {
-  b := bufio.NewReader(client)
-
-  for {
-    line, err := b.ReadBytes('\n')
-    if err != nil {
-      if err == io.EOF {
-        log.Printf("disconnect: %s\n", client.RemoteAddr())
-      } else {
-        log.Printf("error reading from %s: %s\n", client.RemoteAddr(), err)
-      }
-
-      client.Close()
-      return
-    }
-
-    var msg Message
-    json.Unmarshal(line, &msg)
-
-    // give the message a UUID
-    u4, err := uuid.NewV4()
+    conn, err := tcp_server.Accept()
     if err != nil {
       log.Println(err)
       continue
     }
 
-    msg.Id = u4.String()
-
-    // testing - echo data back to the client
-    client.Write(line)
-
-    log.Printf("Message Received: %v\n", msg)
+    log.Printf("%v <-> %v\n", conn.LocalAddr(), conn.RemoteAddr())
+    stream.joins <- conn
   }
 }
