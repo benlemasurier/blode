@@ -10,7 +10,7 @@ import (
 )
 
 type Client struct {
-	incoming   chan string
+	incoming   chan *Event
 	outgoing   chan string
 	disconnect chan net.Conn
 	conn       net.Conn
@@ -20,7 +20,7 @@ type Client struct {
 
 func (client *Client) Read() {
 	for {
-		line, err := client.reader.ReadString('\n')
+		data, err := client.reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
 				log.Printf("client disconnected: %s", client.conn.RemoteAddr().String())
@@ -31,7 +31,14 @@ func (client *Client) Read() {
 
 			log.Printf("client read error: %s\n", err)
 		}
-		client.incoming <- line
+
+		event, err := NewEvent(data)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		client.incoming <- event
 	}
 }
 
@@ -52,7 +59,7 @@ func NewClient(conn net.Conn) *Client {
 	writer := bufio.NewWriter(conn)
 
 	client := &Client{
-		incoming:   make(chan string),
+		incoming:   make(chan *Event),
 		outgoing:   make(chan string),
 		reader:     reader,
 		writer:     writer,
@@ -69,7 +76,7 @@ type Stream struct {
 	clients    map[net.Conn]*Client
 	connect    chan net.Conn
 	disconnect chan net.Conn
-	incoming   chan string
+	incoming   chan *Event
 	outgoing   chan string
 }
 
@@ -101,13 +108,7 @@ func (stream *Stream) Listen() {
 		for {
 			select {
 			case data := <-stream.incoming:
-				event, err := NewEvent(data)
-				if err != nil {
-					log.Println(err)
-					continue
-				}
-
-				stream.Broadcast(event)
+				stream.Broadcast(data)
 			case conn := <-stream.connect:
 				stream.Connect(conn)
 			case disconnect := <-stream.disconnect:
@@ -121,7 +122,7 @@ func NewStream() *Stream {
 	stream := &Stream{
 		clients:    make(map[net.Conn]*Client),
 		connect:    make(chan net.Conn),
-		incoming:   make(chan string),
+		incoming:   make(chan *Event),
 		outgoing:   make(chan string),
 		disconnect: make(chan net.Conn),
 	}
