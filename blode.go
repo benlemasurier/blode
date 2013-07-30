@@ -2,6 +2,7 @@ package main
 
 import (
   "github.com/nu7hatch/gouuid"
+  "io"
   "net"
   "bufio"
   "encoding/json"
@@ -11,13 +12,25 @@ import (
 type Client struct {
   incoming chan string
   outgoing chan string
+  disconnect chan net.Conn
+  conn net.Conn
   reader *bufio.Reader
   writer *bufio.Writer
 }
 
 func (client *Client) Read() {
   for {
-    line, _ := client.reader.ReadString('\n')
+    line, err := client.reader.ReadString('\n')
+    if err != nil {
+      if err == io.EOF {
+        log.Printf("client disconnected: %s", client.conn.RemoteAddr().String())
+        client.disconnect <- client.conn
+        client.conn.Close()
+        return
+      }
+
+      log.Printf("client read error: %s\n", err)
+    }
     client.incoming <- line
   }
 }
@@ -43,6 +56,8 @@ func NewClient(conn net.Conn) *Client {
     outgoing: make(chan string),
     reader: reader,
     writer: writer,
+    conn: conn,
+    disconnect: make(chan net.Conn),
   }
 
   client.Listen()
@@ -51,10 +66,11 @@ func NewClient(conn net.Conn) *Client {
 }
 
 type Stream struct {
-  clients []*Client
+  clients map[net.Conn]*Client
   joins chan net.Conn
   incoming chan string
   outgoing chan string
+  disconnect chan net.Conn
 }
 
 func (stream *Stream) Broadcast(event *Event) {
@@ -65,11 +81,17 @@ func (stream *Stream) Broadcast(event *Event) {
 
 func (stream *Stream) Join(conn net.Conn) {
   client := NewClient(conn)
-  stream.clients = append(stream.clients, client)
+  stream.clients[conn] = client
 
   go func() {
     for {
       stream.incoming <- <-client.incoming
+    }
+  }()
+
+  go func() {
+    for {
+      stream.disconnect <- <-client.disconnect
     }
   }()
 }
@@ -88,6 +110,8 @@ func (stream *Stream) Listen() {
         stream.Broadcast(event)
       case conn := <-stream.joins:
         stream.Join(conn)
+      case disconnect := <-stream.disconnect:
+        delete(stream.clients, disconnect)
       }
     }
   }()
@@ -95,10 +119,11 @@ func (stream *Stream) Listen() {
 
 func NewStream() *Stream {
   stream := &Stream{
-    clients: make([]*Client, 0),
+    clients: make(map[net.Conn]*Client),
     joins: make(chan net.Conn),
     incoming: make(chan string),
     outgoing: make(chan string),
+    disconnect: make(chan net.Conn),
   }
 
   stream.Listen()
