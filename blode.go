@@ -7,15 +7,33 @@ import (
 	"io"
 	"log"
 	"net"
+	"regexp"
+)
+
+const (
+	DEFAULT_SEVERITY = "debug"
 )
 
 type Client struct {
-	incoming   chan *Event
-	outgoing   chan string
-	disconnect chan net.Conn
-	conn       net.Conn
-	reader     *bufio.Reader
-	writer     *bufio.Writer
+	incoming     chan *Event
+	outgoing     chan string
+	errors       chan string
+	disconnect   chan net.Conn
+	conn         net.Conn
+	reader       *bufio.Reader
+	writer       *bufio.Writer
+	subscription *regexp.Regexp
+}
+
+func (client *Client) Subscribe(filter string) {
+	r, err := regexp.Compile(filter)
+	if err != nil {
+		client.errors <- err.Error() + "\n"
+		return
+	}
+
+	// TODO: send a success message to the client?
+	client.subscription = r
 }
 
 func (client *Client) Read() {
@@ -32,6 +50,26 @@ func (client *Client) Read() {
 			log.Printf("client read error: %s\n", err)
 		}
 
+		if data == "\n" {
+			continue
+		}
+
+		// this serves two purposes:
+		//  - validates json
+		//	- determine whether this is a subscription request
+		var f interface{}
+		err = json.Unmarshal([]byte(data), &f)
+		if err != nil {
+			client.errors <- err.Error() + "\n"
+			continue
+		}
+
+		filter := f.(map[string]interface{})
+		if filter["subscribe"] != nil {
+			client.Subscribe(filter["subscribe"].(string))
+			continue
+		}
+
 		event, err := NewEvent(data)
 		if err != nil {
 			log.Println(err)
@@ -44,6 +82,19 @@ func (client *Client) Read() {
 
 func (client *Client) Write() {
 	for data := range client.outgoing {
+		if client.subscription == nil {
+			continue
+		}
+
+		if client.subscription.MatchString(data) == true {
+			client.writer.WriteString(data)
+			client.writer.Flush()
+		}
+	}
+}
+
+func (client *Client) WriteError() {
+	for data := range client.errors {
 		client.writer.WriteString(data)
 		client.writer.Flush()
 	}
@@ -52,6 +103,7 @@ func (client *Client) Write() {
 func (client *Client) Listen() {
 	go client.Read()
 	go client.Write()
+	go client.WriteError()
 }
 
 func NewClient(conn net.Conn) *Client {
@@ -61,6 +113,7 @@ func NewClient(conn net.Conn) *Client {
 	client := &Client{
 		incoming:   make(chan *Event),
 		outgoing:   make(chan string),
+		errors:     make(chan string),
 		reader:     reader,
 		writer:     writer,
 		conn:       conn,
@@ -157,6 +210,11 @@ func NewEvent(event string) (*Event, error) {
 	e := new(Event)
 	json.Unmarshal([]byte(event), &e)
 	e.Id = id.String()
+
+	// assign a message severity if none was provided
+	if e.Severity == "" {
+		e.Severity = DEFAULT_SEVERITY
+	}
 
 	return e, nil
 }
