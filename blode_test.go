@@ -5,9 +5,9 @@ import "testing"
 const test_message = "{'severity': '1', 'message': 'test'}"
 
 func TestNewStream(t *testing.T) {
-	s, err := NewStream()
-	if err != nil {
-		t.Errorf("NewStream(): %v", err)
+	s := NewStream()
+	for c := range s.clients {
+		t.Errorf("%v", c)
 	}
 }
 

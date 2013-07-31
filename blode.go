@@ -8,11 +8,36 @@ import (
 	"log"
 	"net"
 	"regexp"
+	"sync"
 )
 
 const (
 	DEFAULT_SEVERITY = "debug"
 )
+
+type Stats struct {
+	mutex  sync.Mutex
+	Events uint64 // number of events broadcasted
+	Peers  uint64 // number of clients connected
+}
+
+func (s *Stats) AddEvent() {
+	s.mutex.Lock()
+	s.Events++
+	s.mutex.Unlock()
+}
+
+func (s *Stats) AddPeer() {
+	s.mutex.Lock()
+	s.Peers++
+	s.mutex.Unlock()
+}
+
+func (s *Stats) RemovePeer() {
+	s.mutex.Lock()
+	s.Peers--
+	s.mutex.Unlock()
+}
 
 type Client struct {
 	incoming     chan *Event
@@ -56,7 +81,7 @@ func (client *Client) Read() {
 
 		// this serves two purposes:
 		//  - validates json
-		//	- determine whether this is a subscription request
+		//	- determines whether this is a subscription request
 		var f interface{}
 		err = json.Unmarshal([]byte(data), &f)
 		if err != nil {
@@ -131,15 +156,22 @@ type Stream struct {
 	disconnect chan net.Conn
 	incoming   chan *Event
 	outgoing   chan string
+	stats      Stats
 }
 
 func (stream *Stream) Broadcast(event *Event) {
+	// increment the total number of events broadcasted
+	stream.stats.AddEvent()
+
 	for _, client := range stream.clients {
 		client.outgoing <- event.String()
 	}
 }
 
 func (stream *Stream) Connect(conn net.Conn) {
+	// increment the number connected clients
+	stream.stats.AddPeer()
+
 	client := NewClient(conn)
 	stream.clients[conn] = client
 
@@ -156,6 +188,13 @@ func (stream *Stream) Connect(conn net.Conn) {
 	}()
 }
 
+func (stream *Stream) Disconnect(conn net.Conn) {
+	// decrease the number connected clients
+	stream.stats.RemovePeer()
+
+	delete(stream.clients, conn)
+}
+
 func (stream *Stream) Listen() {
 	go func() {
 		for {
@@ -165,7 +204,7 @@ func (stream *Stream) Listen() {
 			case conn := <-stream.connect:
 				stream.Connect(conn)
 			case disconnect := <-stream.disconnect:
-				delete(stream.clients, disconnect)
+				stream.Disconnect(disconnect)
 			}
 		}
 	}()
