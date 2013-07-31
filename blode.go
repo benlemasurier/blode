@@ -15,28 +15,78 @@ const (
 	DEFAULT_SEVERITY = "debug"
 )
 
-type Stats struct {
-	mutex  sync.Mutex
-	Events uint64 // number of events broadcasted
-	Peers  uint64 // number of clients connected
+type Stream struct {
+	clients    map[net.Conn]*Client
+	connect    chan net.Conn
+	disconnect chan net.Conn
+	incoming   chan *Event
+	outgoing   chan string
+	stats      Stats
 }
 
-func (s *Stats) AddEvent() {
-	s.mutex.Lock()
-	s.Events++
-	s.mutex.Unlock()
+func (stream *Stream) Broadcast(event *Event) {
+	// increment the total number of events broadcasted
+	stream.stats.AddEvent()
+
+	for _, client := range stream.clients {
+		client.outgoing <- event.String()
+	}
 }
 
-func (s *Stats) AddPeer() {
-	s.mutex.Lock()
-	s.Peers++
-	s.mutex.Unlock()
+func (stream *Stream) Connect(conn net.Conn) {
+	// increment the number connected clients
+	stream.stats.AddPeer()
+
+	client := NewClient(conn)
+	stream.clients[conn] = client
+
+	go func() {
+		for {
+			stream.incoming <- <-client.incoming
+		}
+	}()
+
+	go func() {
+		for {
+			stream.disconnect <- <-client.disconnect
+		}
+	}()
 }
 
-func (s *Stats) RemovePeer() {
-	s.mutex.Lock()
-	s.Peers--
-	s.mutex.Unlock()
+func (stream *Stream) Disconnect(conn net.Conn) {
+	// decrease the number connected clients
+	stream.stats.RemovePeer()
+
+	delete(stream.clients, conn)
+}
+
+func (stream *Stream) Listen() {
+	go func() {
+		for {
+			select {
+			case data := <-stream.incoming:
+				stream.Broadcast(data)
+			case conn := <-stream.connect:
+				stream.Connect(conn)
+			case disconnect := <-stream.disconnect:
+				stream.Disconnect(disconnect)
+			}
+		}
+	}()
+}
+
+func NewStream() *Stream {
+	stream := &Stream{
+		clients:    make(map[net.Conn]*Client),
+		connect:    make(chan net.Conn),
+		incoming:   make(chan *Event),
+		outgoing:   make(chan string),
+		disconnect: make(chan net.Conn),
+	}
+
+	stream.Listen()
+
+	return stream
 }
 
 type Client struct {
@@ -150,80 +200,6 @@ func NewClient(conn net.Conn) *Client {
 	return client
 }
 
-type Stream struct {
-	clients    map[net.Conn]*Client
-	connect    chan net.Conn
-	disconnect chan net.Conn
-	incoming   chan *Event
-	outgoing   chan string
-	stats      Stats
-}
-
-func (stream *Stream) Broadcast(event *Event) {
-	// increment the total number of events broadcasted
-	stream.stats.AddEvent()
-
-	for _, client := range stream.clients {
-		client.outgoing <- event.String()
-	}
-}
-
-func (stream *Stream) Connect(conn net.Conn) {
-	// increment the number connected clients
-	stream.stats.AddPeer()
-
-	client := NewClient(conn)
-	stream.clients[conn] = client
-
-	go func() {
-		for {
-			stream.incoming <- <-client.incoming
-		}
-	}()
-
-	go func() {
-		for {
-			stream.disconnect <- <-client.disconnect
-		}
-	}()
-}
-
-func (stream *Stream) Disconnect(conn net.Conn) {
-	// decrease the number connected clients
-	stream.stats.RemovePeer()
-
-	delete(stream.clients, conn)
-}
-
-func (stream *Stream) Listen() {
-	go func() {
-		for {
-			select {
-			case data := <-stream.incoming:
-				stream.Broadcast(data)
-			case conn := <-stream.connect:
-				stream.Connect(conn)
-			case disconnect := <-stream.disconnect:
-				stream.Disconnect(disconnect)
-			}
-		}
-	}()
-}
-
-func NewStream() *Stream {
-	stream := &Stream{
-		clients:    make(map[net.Conn]*Client),
-		connect:    make(chan net.Conn),
-		incoming:   make(chan *Event),
-		outgoing:   make(chan string),
-		disconnect: make(chan net.Conn),
-	}
-
-	stream.Listen()
-
-	return stream
-}
-
 type Event struct {
 	Id       string
 	Severity string
@@ -256,6 +232,30 @@ func NewEvent(event string) (*Event, error) {
 	}
 
 	return e, nil
+}
+
+type Stats struct {
+	mutex  sync.Mutex
+	Events uint64 // number of events broadcasted
+	Peers  uint64 // number of clients connected
+}
+
+func (s *Stats) AddEvent() {
+	s.mutex.Lock()
+	s.Events++
+	s.mutex.Unlock()
+}
+
+func (s *Stats) AddPeer() {
+	s.mutex.Lock()
+	s.Peers++
+	s.mutex.Unlock()
+}
+
+func (s *Stats) RemovePeer() {
+	s.mutex.Lock()
+	s.Peers--
+	s.mutex.Unlock()
 }
 
 func main() {
