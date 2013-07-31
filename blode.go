@@ -37,7 +37,7 @@ func (stream *Stream) Connect(conn net.Conn) {
 	// increment the number connected clients
 	stream.stats.AddPeer()
 
-	client := NewClient(conn)
+	client := NewClient(conn, stream)
 	stream.clients[conn] = client
 
 	go func() {
@@ -75,6 +75,20 @@ func (stream *Stream) Listen() {
 	}()
 }
 
+// Send the client stream stats
+func (s *Stream) Stats(c *Client) {
+	s.stats.mutex.Lock()
+	stats, err := json.Marshal(s.stats)
+	s.stats.mutex.Unlock()
+
+	if err != nil {
+		c.errors <- err.Error() + "\n"
+		return
+	}
+
+	c.errors <- string(stats) + "\n"
+}
+
 func NewStream() *Stream {
 	stream := &Stream{
 		clients:    make(map[net.Conn]*Client),
@@ -90,6 +104,7 @@ func NewStream() *Stream {
 }
 
 type Client struct {
+	stream       *Stream
 	incoming     chan *Event
 	outgoing     chan string
 	errors       chan string
@@ -129,9 +144,9 @@ func (client *Client) Read() {
 			continue
 		}
 
-		// this serves two purposes:
+		// this serves mulitple purposes:
 		//  - validates json
-		//	- determines whether this is a subscription request
+		//	- determines the type of request (subscription, stats, event)
 		var f interface{}
 		err = json.Unmarshal([]byte(data), &f)
 		if err != nil {
@@ -142,6 +157,11 @@ func (client *Client) Read() {
 		filter := f.(map[string]interface{})
 		if filter["subscribe"] != nil {
 			client.Subscribe(filter["subscribe"].(string))
+			continue
+		}
+
+		if filter["stats"] != nil {
+			client.stream.Stats(client)
 			continue
 		}
 
@@ -181,7 +201,7 @@ func (client *Client) Listen() {
 	go client.WriteError()
 }
 
-func NewClient(conn net.Conn) *Client {
+func NewClient(conn net.Conn, s *Stream) *Client {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
 
@@ -194,6 +214,8 @@ func NewClient(conn net.Conn) *Client {
 		conn:       conn,
 		disconnect: make(chan net.Conn),
 	}
+
+	client.stream = s
 
 	client.Listen()
 
