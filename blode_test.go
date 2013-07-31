@@ -4,6 +4,13 @@ import "testing"
 
 const test_message = "{'severity': '1', 'message': 'test'}"
 
+func TestNewStream(t *testing.T) {
+	s, err := NewStream()
+	if err != nil {
+		t.Errorf("NewStream(): %v", err)
+	}
+}
+
 func TestNewEvent(t *testing.T) {
 	e, err := NewEvent(test_message)
 	if err != nil {
