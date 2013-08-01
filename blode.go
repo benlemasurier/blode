@@ -25,53 +25,53 @@ type Stream struct {
 }
 
 // Send event data to all connected clients
-func (stream *Stream) Broadcast(event *Event) {
+func (s *Stream) Broadcast(event *Event) {
 	// increment the total number of events broadcasted
-	stream.stats.AddEvent()
+	s.stats.AddEvent()
 
-	for _, c := range stream.clients {
+	for _, c := range s.clients {
 		c.outgoing <- event.String()
 	}
 }
 
 // Process an incoming client connection
-func (stream *Stream) Connect(conn net.Conn) {
+func (s *Stream) Connect(conn net.Conn) {
 	// increment the number connected clients
-	stream.stats.AddPeer()
+	s.stats.AddPeer()
 
-	c := NewClient(conn, stream)
-	stream.clients[conn] = c
+	c := NewClient(conn, s)
+	s.clients[conn] = c
 
 	go func() {
 		for {
-			stream.incoming <- <-c.incoming
+			s.incoming <- <-c.incoming
 		}
 	}()
 
 	go func() {
 		for {
-			stream.disconnect <- <-c.disconnect
+			s.disconnect <- <-c.disconnect
 		}
 	}()
 }
 
-func (stream *Stream) Disconnect(conn net.Conn) {
+func (s *Stream) Disconnect(conn net.Conn) {
 	// decrease the number connected clients
-	stream.stats.RemovePeer()
+	s.stats.RemovePeer()
 
-	delete(stream.clients, conn)
+	delete(s.clients, conn)
 }
 
-func (stream *Stream) Listen() {
+func (s *Stream) Listen() {
 	go func() {
 		for {
 			select {
-			case data := <-stream.incoming:
-				stream.Broadcast(data)
-			case conn := <-stream.connect:
-				stream.Connect(conn)
-			case disconnect := <-stream.disconnect:
-				stream.Disconnect(disconnect)
+			case data := <-s.incoming:
+				s.Broadcast(data)
+			case conn := <-s.connect:
+				s.Connect(conn)
+			case disconnect := <-s.disconnect:
+				s.Disconnect(disconnect)
 			}
 		}
 	}()
@@ -92,7 +92,7 @@ func (s *Stream) Stats(c *Client) {
 }
 
 func NewStream() *Stream {
-	stream := &Stream{
+	s := &Stream{
 		clients:    make(map[net.Conn]*Client),
 		connect:    make(chan net.Conn),
 		incoming:   make(chan *Event),
@@ -100,9 +100,9 @@ func NewStream() *Stream {
 		disconnect: make(chan net.Conn),
 	}
 
-	stream.Listen()
+	s.Listen()
 
-	return stream
+	return s
 }
 
 type Client struct {
