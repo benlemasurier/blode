@@ -354,9 +354,6 @@ func udp_server(s *Stream) {
 func main() {
 	stream := NewStream()
 
-	go tcp_server(stream)
 	go udp_server(stream)
-
-	for {
-	}
+	tcp_server(stream)
 }
