@@ -13,6 +13,7 @@ import (
 
 const (
 	TCP_ADDR         = ":8001"
+	UDP_BUF_SIZE     = 4096
 	DEFAULT_SEVERITY = "debug"
 )
 
@@ -339,7 +340,7 @@ func udp_server(s *Stream) {
 		log.Fatal(err)
 	}
 
-	var buf [1024]byte
+	var buf [UDP_BUF_SIZE]byte
 	for {
 		rlen, addr, err := udp_server.ReadFromUDP(buf[0:])
 		if err != nil {
@@ -347,7 +348,19 @@ func udp_server(s *Stream) {
 			continue
 		}
 
-		log.Printf("%v <-> %v: %v[%v]\n", udp_addr.IP, addr.IP, buf, rlen)
+		event, err := NewEvent(string(buf[0:rlen]))
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		if event.Message == "" {
+			continue
+		}
+
+		s.incoming <- event
+
+		log.Printf("%vb received <- udp[%v] \n", rlen, addr.IP)
 	}
 }
 
