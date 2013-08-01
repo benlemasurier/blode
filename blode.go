@@ -29,8 +29,8 @@ func (stream *Stream) Broadcast(event *Event) {
 	// increment the total number of events broadcasted
 	stream.stats.AddEvent()
 
-	for _, client := range stream.clients {
-		client.outgoing <- event.String()
+	for _, c := range stream.clients {
+		c.outgoing <- event.String()
 	}
 }
 
@@ -39,18 +39,18 @@ func (stream *Stream) Connect(conn net.Conn) {
 	// increment the number connected clients
 	stream.stats.AddPeer()
 
-	client := NewClient(conn, stream)
-	stream.clients[conn] = client
+	c := NewClient(conn, stream)
+	stream.clients[conn] = c
 
 	go func() {
 		for {
-			stream.incoming <- <-client.incoming
+			stream.incoming <- <-c.incoming
 		}
 	}()
 
 	go func() {
 		for {
-			stream.disconnect <- <-client.disconnect
+			stream.disconnect <- <-c.disconnect
 		}
 	}()
 }
@@ -117,32 +117,32 @@ type Client struct {
 	subscription *regexp.Regexp
 }
 
-func (client *Client) Subscribe(filter string) {
+func (c *Client) Subscribe(filter string) {
 	r, err := regexp.Compile(filter)
 	if err != nil {
-		client.errors <- err.Error() + "\n"
+		c.errors <- err.Error() + "\n"
 		return
 	}
 
 	// TODO: send a success message to the client?
-	client.subscription = r
+	c.subscription = r
 }
 
-func (client *Client) Read() {
+func (c *Client) Read() {
 	for {
-		data, err := client.reader.ReadString('\n')
+		data, err := c.reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				log.Printf("client disconnected: %s", client.conn.RemoteAddr().String())
-				client.disconnect <- client.conn
-				client.conn.Close()
+				log.Printf("client disconnected: %s", c.conn.RemoteAddr().String())
+				c.disconnect <- c.conn
+				c.conn.Close()
 				return
 			}
 
 			log.Printf("client read error: %s\n", err)
 		}
 
-		client.stream.stats.AddBytesIn(len([]byte(data)))
+		c.stream.stats.AddBytesIn(len([]byte(data)))
 
 		if data == "\n" {
 			continue
@@ -154,18 +154,18 @@ func (client *Client) Read() {
 		var f interface{}
 		err = json.Unmarshal([]byte(data), &f)
 		if err != nil {
-			client.errors <- err.Error() + "\n"
+			c.errors <- err.Error() + "\n"
 			continue
 		}
 
 		filter := f.(map[string]interface{})
 		if filter["subscribe"] != nil {
-			client.Subscribe(filter["subscribe"].(string))
+			c.Subscribe(filter["subscribe"].(string))
 			continue
 		}
 
 		if filter["stats"] != nil {
-			client.stream.Stats(client)
+			c.stream.Stats(c)
 			continue
 		}
 
@@ -177,49 +177,49 @@ func (client *Client) Read() {
 
 		if event.Message == "" {
 			// TODO: proper type here
-			client.errors <- "{\"error\": \"invalid message format\"}\n"
+			c.errors <- "{\"error\": \"invalid message format\"}\n"
 			continue
 		}
 
-		client.incoming <- event
+		c.incoming <- event
 	}
 }
 
-func (client *Client) Write() {
-	for data := range client.outgoing {
-		if client.subscription == nil {
+func (c *Client) Write() {
+	for data := range c.outgoing {
+		if c.subscription == nil {
 			continue
 		}
 
-		if client.subscription.MatchString(data) == true {
-			client.writer.WriteString(data)
-			client.writer.Flush()
+		if c.subscription.MatchString(data) == true {
+			c.writer.WriteString(data)
+			c.writer.Flush()
 
-			client.stream.stats.AddBytesOut(len([]byte(data)))
+			c.stream.stats.AddBytesOut(len([]byte(data)))
 		}
 	}
 }
 
-func (client *Client) WriteError() {
-	for data := range client.errors {
-		client.writer.WriteString(data)
-		client.writer.Flush()
+func (c *Client) WriteError() {
+	for data := range c.errors {
+		c.writer.WriteString(data)
+		c.writer.Flush()
 
-		client.stream.stats.AddBytesOut(len([]byte(data)))
+		c.stream.stats.AddBytesOut(len([]byte(data)))
 	}
 }
 
-func (client *Client) Listen() {
-	go client.Read()
-	go client.Write()
-	go client.WriteError()
+func (c *Client) Listen() {
+	go c.Read()
+	go c.Write()
+	go c.WriteError()
 }
 
 func NewClient(conn net.Conn, s *Stream) *Client {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
 
-	client := &Client{
+	c := &Client{
 		incoming:   make(chan *Event),
 		outgoing:   make(chan string),
 		errors:     make(chan string),
@@ -229,11 +229,11 @@ func NewClient(conn net.Conn, s *Stream) *Client {
 		disconnect: make(chan net.Conn),
 	}
 
-	client.stream = s
+	c.stream = s
 
-	client.Listen()
+	c.Listen()
 
-	return client
+	return c
 }
 
 type Event struct {
