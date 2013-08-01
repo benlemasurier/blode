@@ -288,14 +288,37 @@ func main() {
 		log.Fatal(err)
 	}
 
+	udp_addr, err := net.ResolveUDPAddr("udp", ":8002")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	udp_server, err := net.ListenUDP("udp", udp_addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go func() {
+		for {
+			conn, err := tcp_server.Accept()
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+
+			log.Printf("%v <-> %v\n", conn.LocalAddr(), conn.RemoteAddr())
+			stream.connect <- conn
+		}
+	}()
+
+	var buf [1024]byte
 	for {
-		conn, err := tcp_server.Accept()
+		rlen, addr, err := udp_server.ReadFromUDP(buf[0:])
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		log.Printf("%v <-> %v\n", conn.LocalAddr(), conn.RemoteAddr())
-		stream.connect <- conn
+		log.Printf("%v <-> %v: %v[%v]\n", udp_addr.IP, addr.IP, buf, rlen)
 	}
 }
