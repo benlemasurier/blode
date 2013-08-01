@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	TCP_ADDR         = ":8001"
 	DEFAULT_SEVERITY = "debug"
 )
 
@@ -242,8 +243,8 @@ type Event struct {
 	Message  string
 }
 
-func (event *Event) String() string {
-	data, err := json.MarshalIndent(event, "", "\t")
+func (e *Event) String() string {
+	data, err := json.MarshalIndent(e, "", "\t")
 	if err != nil {
 		log.Println(err)
 	}
@@ -308,14 +309,26 @@ func (s *Stats) AddBytesOut(b int) {
 	s.mutex.Unlock()
 }
 
-func main() {
-	stream := NewStream()
-
-	tcp_server, err := net.Listen("tcp", ":8001")
+func tcp_server(s *Stream) {
+	tcp_server, err := net.Listen("tcp", TCP_ADDR)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	for {
+		conn, err := tcp_server.Accept()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		log.Printf("%v <-> %v\n", conn.LocalAddr(), conn.RemoteAddr())
+		s.connect <- conn
+	}
+
+}
+
+func udp_server(s *Stream) {
 	udp_addr, err := net.ResolveUDPAddr("udp", ":8002")
 	if err != nil {
 		log.Fatal(err)
@@ -325,19 +338,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	go func() {
-		for {
-			conn, err := tcp_server.Accept()
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
-			log.Printf("%v <-> %v\n", conn.LocalAddr(), conn.RemoteAddr())
-			stream.connect <- conn
-		}
-	}()
 
 	var buf [1024]byte
 	for {
@@ -349,4 +349,11 @@ func main() {
 
 		log.Printf("%v <-> %v: %v[%v]\n", udp_addr.IP, addr.IP, buf, rlen)
 	}
+}
+
+func main() {
+	stream := NewStream()
+
+	go tcp_server(stream)
+	udp_server(stream)
 }
