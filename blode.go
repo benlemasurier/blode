@@ -24,6 +24,7 @@ type Stream struct {
 	stats      Stats
 }
 
+// Send event data to all connected clients
 func (stream *Stream) Broadcast(event *Event) {
 	// increment the total number of events broadcasted
 	stream.stats.AddEvent()
@@ -33,6 +34,7 @@ func (stream *Stream) Broadcast(event *Event) {
 	}
 }
 
+// Process an incoming client connection
 func (stream *Stream) Connect(conn net.Conn) {
 	// increment the number connected clients
 	stream.stats.AddPeer()
@@ -78,7 +80,7 @@ func (stream *Stream) Listen() {
 // Send the client stream stats
 func (s *Stream) Stats(c *Client) {
 	s.stats.mutex.Lock()
-	stats, err := json.Marshal(s.stats)
+	stats, err := json.MarshalIndent(s.stats, "", "\t")
 	s.stats.mutex.Unlock()
 
 	if err != nil {
@@ -140,6 +142,8 @@ func (client *Client) Read() {
 			log.Printf("client read error: %s\n", err)
 		}
 
+		client.stream.stats.AddBytesIn(len([]byte(data)))
+
 		if data == "\n" {
 			continue
 		}
@@ -171,6 +175,12 @@ func (client *Client) Read() {
 			continue
 		}
 
+		if event.Message == "" {
+			// TODO: proper type here
+			client.errors <- "{\"error\": \"invalid message format\"}\n"
+			continue
+		}
+
 		client.incoming <- event
 	}
 }
@@ -184,6 +194,8 @@ func (client *Client) Write() {
 		if client.subscription.MatchString(data) == true {
 			client.writer.WriteString(data)
 			client.writer.Flush()
+
+			client.stream.stats.AddBytesOut(len([]byte(data)))
 		}
 	}
 }
@@ -192,6 +204,8 @@ func (client *Client) WriteError() {
 	for data := range client.errors {
 		client.writer.WriteString(data)
 		client.writer.Flush()
+
+		client.stream.stats.AddBytesOut(len([]byte(data)))
 	}
 }
 
@@ -229,7 +243,7 @@ type Event struct {
 }
 
 func (event *Event) String() string {
-	data, err := json.Marshal(event)
+	data, err := json.MarshalIndent(event, "", "\t")
 	if err != nil {
 		log.Println(err)
 	}
@@ -257,9 +271,11 @@ func NewEvent(event string) (*Event, error) {
 }
 
 type Stats struct {
-	mutex  sync.Mutex
-	Events uint64 // number of events broadcasted
-	Peers  uint64 // number of clients connected
+	mutex    sync.Mutex
+	Events   uint64 // number of events broadcasted
+	Peers    uint64 // number of clients connected
+	BytesIn  uint64 // number of incoming bytes
+	BytesOut uint64 // number of outgoing bytes
 }
 
 func (s *Stats) AddEvent() {
@@ -277,6 +293,18 @@ func (s *Stats) AddPeer() {
 func (s *Stats) RemovePeer() {
 	s.mutex.Lock()
 	s.Peers--
+	s.mutex.Unlock()
+}
+
+func (s *Stats) AddBytesIn(b int) {
+	s.mutex.Lock()
+	s.BytesIn += uint64(b)
+	s.mutex.Unlock()
+}
+
+func (s *Stats) AddBytesOut(b int) {
+	s.mutex.Lock()
+	s.BytesOut += uint64(b)
 	s.mutex.Unlock()
 }
 
