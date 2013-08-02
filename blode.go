@@ -189,32 +189,30 @@ func (c *Client) Read() {
 }
 
 func (c *Client) Write() {
-	for data := range c.outgoing {
-		if c.subscription == nil {
-			continue
-		}
-
-		if c.subscription.MatchString(data) == true {
+	for {
+		select {
+		case data := <-c.errors:
+			c.stream.stats.AddError(1)
 			c.writer.WriteString(data)
 			c.writer.Flush()
+		case data := <-c.outgoing:
+			if c.subscription == nil {
+				break
+			}
 
-			c.stream.stats.AddBytesOut(len([]byte(data)))
+			if c.subscription.MatchString(data) == true {
+				c.writer.WriteString(data)
+				c.writer.Flush()
+
+				c.stream.stats.AddBytesOut(len([]byte(data)))
+			}
 		}
-	}
-}
-
-func (c *Client) WriteError() {
-	for data := range c.errors {
-		c.stream.stats.AddError(1)
-		c.writer.WriteString(data)
-		c.writer.Flush()
 	}
 }
 
 func (c *Client) Listen() {
 	go c.Read()
 	go c.Write()
-	go c.WriteError()
 }
 
 func NewClient(conn net.Conn, s *Stream) *Client {
