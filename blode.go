@@ -132,14 +132,17 @@ func (c *Client) Subscribe(filter string) {
 func (c *Client) Read() {
 	for {
 		data, err := c.reader.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				log.Printf("client disconnected: %s", c.conn.RemoteAddr().String())
-				c.disconnect <- c.conn
-				c.conn.Close()
-				return
-			}
 
+		// did the client disconnect?
+		if err == io.EOF {
+			c.conn.Close()
+			c.disconnect <- c.conn
+
+			log.Printf("client disconnected: %s", c.conn.RemoteAddr().String())
+			return
+		}
+
+		if err != nil {
 			log.Printf("client read error: %s\n", err)
 		}
 
