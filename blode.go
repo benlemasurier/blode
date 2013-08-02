@@ -66,18 +66,16 @@ func (s *Stream) Disconnect(conn net.Conn) {
 }
 
 func (s *Stream) Listen() {
-	go func() {
-		for {
-			select {
-			case data := <-s.incoming:
-				s.Broadcast(data)
-			case conn := <-s.connect:
-				s.Connect(conn)
-			case disconnect := <-s.disconnect:
-				s.Disconnect(disconnect)
-			}
+	for {
+		select {
+		case data := <-s.incoming:
+			s.Broadcast(data)
+		case conn := <-s.connect:
+			s.Connect(conn)
+		case disconnect := <-s.disconnect:
+			s.Disconnect(disconnect)
 		}
-	}()
+	}
 }
 
 // Send the client stream stats
@@ -103,7 +101,7 @@ func NewStream() *Stream {
 		disconnect: make(chan net.Conn),
 	}
 
-	s.Listen()
+	go s.Listen()
 
 	return s
 }
@@ -192,9 +190,10 @@ func (c *Client) Write() {
 	for {
 		select {
 		case data := <-c.errors:
-			c.stream.stats.AddError(1)
 			c.writer.WriteString(data)
 			c.writer.Flush()
+
+			c.stream.stats.AddError(1)
 		case data := <-c.outgoing:
 			if c.subscription == nil {
 				break
