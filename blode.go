@@ -13,6 +13,7 @@ import (
 
 const (
 	TCP_ADDR         = ":8001"
+	UDP_ADDR         = ":8002"
 	UDP_BUF_SIZE     = 4096
 	DEFAULT_SEVERITY = "debug"
 )
@@ -204,10 +205,9 @@ func (c *Client) Write() {
 
 func (c *Client) WriteError() {
 	for data := range c.errors {
+		c.stream.stats.AddError(1)
 		c.writer.WriteString(data)
 		c.writer.Flush()
-
-		c.stream.stats.AddBytesOut(len([]byte(data)))
 	}
 }
 
@@ -274,6 +274,7 @@ func NewEvent(event string) (*Event, error) {
 
 type Stats struct {
 	mutex    sync.Mutex
+	Errors   uint64 // number of client errors
 	Events   uint64 // number of events broadcasted
 	Peers    uint64 // number of clients connected
 	BytesIn  uint64 // number of incoming bytes
@@ -307,6 +308,12 @@ func (s *Stats) AddBytesIn(b int) {
 func (s *Stats) AddBytesOut(b int) {
 	s.mutex.Lock()
 	s.BytesOut += uint64(b)
+	s.mutex.Unlock()
+}
+
+func (s *Stats) AddError(n int) {
+	s.mutex.Lock()
+	s.Errors += uint64(n)
 	s.mutex.Unlock()
 }
 
