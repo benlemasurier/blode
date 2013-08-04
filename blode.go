@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"regexp"
+	"runtime"
 	"sync"
 )
 
@@ -116,6 +117,7 @@ type Client struct {
 	reader       *bufio.Reader
 	writer       *bufio.Writer
 	subscription *regexp.Regexp
+	mutex        sync.Mutex
 }
 
 func (c *Client) Subscribe(filter string) {
@@ -126,19 +128,27 @@ func (c *Client) Subscribe(filter string) {
 	}
 
 	// TODO: send a success message to the client?
+	c.mutex.Lock()
 	c.subscription = r
+	c.mutex.Unlock()
+}
+
+func (c *Client) Subscription() *regexp.Regexp {
+	c.mutex.Lock()
+	s := c.subscription
+	c.mutex.Unlock()
+
+	return s
 }
 
 func (c *Client) Read() {
+	defer c.Close()
+
 	for {
 		data, err := c.reader.ReadString('\n')
 
 		// did the client disconnect?
 		if err == io.EOF {
-			c.conn.Close()
-			c.disconnect <- c.conn
-
-			log.Printf("client disconnected: %s", c.conn.RemoteAddr().String())
 			return
 		}
 
@@ -198,11 +208,11 @@ func (c *Client) Write() {
 
 			c.stream.stats.AddError(1)
 		case data := <-c.outgoing:
-			if c.subscription == nil {
+			if c.Subscription() == nil {
 				break
 			}
 
-			if c.subscription.MatchString(data) == true {
+			if c.Subscription().MatchString(data) == true {
 				c.writer.WriteString(data)
 				c.writer.Flush()
 
@@ -215,6 +225,13 @@ func (c *Client) Write() {
 func (c *Client) Listen() {
 	go c.Read()
 	go c.Write()
+}
+
+func (c *Client) Close() {
+	c.conn.Close()
+	c.disconnect <- c.conn
+
+	log.Printf("client disconnected: %s", c.conn.RemoteAddr().String())
 }
 
 func NewClient(conn net.Conn, s *Stream) *Client {
@@ -372,6 +389,7 @@ func udp_server(s *Stream) {
 }
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	stream := NewStream()
 
 	go udp_server(stream)
