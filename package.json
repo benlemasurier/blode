@@ -19,12 +19,22 @@
     "syslog",
     "logging"
   ],
-  "author": "Ben LeMasurier",
+  "author": "Ben LeMasurier <ben.lemasurier@sparkfun.com>",
+  "contributors":[
+    {
+      "name" : "Todd Treece",
+      "email" : "toddtreece@gmail.com"
+    }
+  ],
   "license": "GPL v2",
   "bugs": {
     "url": "https://github.com/benlemasurier/blode/issues"
   },
   "homepage": "https://github.com/benlemasurier/blode",
+  "engines": {
+    "node": ">=0.10.15"
+  },
+  "engineStrict": true,
   "dependencies": {
     "socket.io": "~0.9.16",
     "node-uuid": "~1.4.1"
