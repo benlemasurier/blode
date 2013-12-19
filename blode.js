@@ -16,8 +16,6 @@
 
 HOST = "127.0.0.1";
 
-require("./lib/Math.uuid");
-
 var derp =   require("./lib/util"),
     io   =   require("socket.io"),
     net  =   require("net"),
@@ -26,6 +24,7 @@ var derp =   require("./lib/util"),
     http =   require("http"),
     dgram =  require("dgram"),
     event =  require("events"),
+    uuid =   require('node-uuid'),
     emitter = new event.EventEmitter,
     log_buffer = { id: 0, severity: 'none', message:  '--MARK--' };
 
@@ -100,17 +99,26 @@ function Client(stream, type) {
   util.puts("socket.io broadcast started on " + HOST + ":" + blode.config.io.port);
 
   emitter.on("log", function(log) {
-    log.id = Math.uuid();
+
+    log.id = uuid.v4();
 
     blode.clients.forEach(function(client) {
+
       try {
-        if(client.subscription.indexOf(log.severity) != -1)
+
+        if(client.subscription.indexOf(log.severity) != -1) {
+
           if(client.type === 'tcp')
             client.stream.write(JSON.stringify(log) + "\r\n");
           else if(client.type === 'io')
             client.stream.volatile.emit('message', JSON.stringify(log));
+
+        }
+
       } catch(e) {
+
         socket_clients.remove(client);
+
       }
     });
 
