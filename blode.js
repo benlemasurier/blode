@@ -77,7 +77,7 @@ function Client(stream, type) {
       } catch(e) { console.log(e); }
     });
 
-  }).listen(8001, '127.0.0.1');
+  }).listen(blode.config.socket.broadcast_port, HOST);
 
 
   util.puts("tcp broadcast started on " + HOST + ":" + blode.config.socket.broadcast_port);
