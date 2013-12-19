@@ -1,0 +1,42 @@
+{
+  "name": "blode",
+  "version": "0.0.2",
+  "description": "a simple, powerful syslog-like event broadcast daemon",
+  "main": "blode.js",
+  "directories": {
+    "example": "example",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "test/ping"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/benlemasurier/blode.git"
+  },
+  "keywords": [
+    "blode",
+    "syslog",
+    "logging"
+  ],
+  "author": "Ben LeMasurier <ben.lemasurier@sparkfun.com>",
+  "contributors":[
+    {
+      "name" : "Todd Treece",
+      "email" : "toddtreece@gmail.com"
+    }
+  ],
+  "license": "GPL v2",
+  "bugs": {
+    "url": "https://github.com/benlemasurier/blode/issues"
+  },
+  "homepage": "https://github.com/benlemasurier/blode",
+  "engines": {
+    "node": ">=0.10.15"
+  },
+  "engineStrict": true,
+  "dependencies": {
+    "socket.io": "~0.9.16",
+    "node-uuid": "~1.4.1"
+  }
+}

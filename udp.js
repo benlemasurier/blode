@@ -6,7 +6,7 @@
     var udp   = require("dgram").createSocket("udp4");
 
     udp.on("message", function (message, rinfo) {
-      try { event.emit("log", JSON.parse(message)); } catch(e) {}
+      try { event.emit("log", JSON.parse(message)); } catch(e) { console.log(e); }
     });
 
     udp.bind(port);
