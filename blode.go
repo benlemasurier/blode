@@ -13,6 +13,7 @@ import (
 )
 
 const (
+  BLODE_VERSION    = "0.0.1"
 	TCP_ADDR         = ":8001"
 	UDP_ADDR         = ":8002"
 	UDP_BUF_SIZE     = 4096
@@ -340,6 +341,8 @@ func tcp_server(s *Stream) {
 		log.Fatal(err)
 	}
 
+  log.Println("tcp server started, ", TCP_ADDR)
+
 	for {
 		conn, err := tcp_server.Accept()
 		if err != nil {
@@ -354,7 +357,7 @@ func tcp_server(s *Stream) {
 }
 
 func udp_server(s *Stream) {
-	udp_addr, err := net.ResolveUDPAddr("udp", ":8002")
+	udp_addr, err := net.ResolveUDPAddr("udp", UDP_ADDR)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -363,6 +366,8 @@ func udp_server(s *Stream) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+  log.Println("udp server started, ", UDP_ADDR)
 
 	var buf [UDP_BUF_SIZE]byte
 	for {
@@ -389,6 +394,7 @@ func udp_server(s *Stream) {
 }
 
 func main() {
+  log.Println("blode version ", BLODE_VERSION)
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	stream := NewStream()
 
