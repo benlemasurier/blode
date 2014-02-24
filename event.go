@@ -35,7 +35,7 @@ func NewEvent(event string) (*Event, error) {
 
 	// assign a message severity if none was provided
 	if e.Severity == "" {
-		e.Severity = config.DefaultSeverity
+		e.Severity = *config.DefaultSeverity
 	}
 
 	return e, nil
