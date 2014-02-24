@@ -26,7 +26,10 @@ func tcp_server(s *Stream) {
 			continue
 		}
 
-		log.Printf("%v <-> %v\n", conn.LocalAddr(), conn.RemoteAddr())
+    if(*config.Debug) {
+      log.Printf("%v <-> %v\n", conn.LocalAddr(), conn.RemoteAddr())
+    }
+
 		s.connect <- conn
 	}
 }
@@ -42,7 +45,9 @@ func udp_server(s *Stream) {
 		log.Fatal(err)
 	}
 
-	log.Println("udp server started,", *config.UdpAddr)
+  if(*config.Debug) {
+    log.Println("udp server started,", *config.UdpAddr)
+  }
 
 	var buf [UDP_BUF_SIZE]byte
 	for {
