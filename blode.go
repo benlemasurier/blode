@@ -1,8 +1,11 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"net"
+	"os"
 	"runtime"
 )
 
@@ -20,7 +23,7 @@ func tcp_server(s *Stream) {
 		log.Fatal(err)
 	}
 
-	log.Println("tcp server started, ", TCP_ADDR)
+	log.Println("tcp server started,", TCP_ADDR)
 
 	for {
 		conn, err := tcp_server.Accept()
@@ -46,7 +49,7 @@ func udp_server(s *Stream) {
 		log.Fatal(err)
 	}
 
-	log.Println("udp server started, ", UDP_ADDR)
+	log.Println("udp server started,", UDP_ADDR)
 
 	var buf [UDP_BUF_SIZE]byte
 	for {
@@ -72,7 +75,17 @@ func udp_server(s *Stream) {
 	}
 }
 
+func Usage() {
+	fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS]\n", os.Args[0])
+}
+
 func main() {
+	flag.Usage = Usage
+	flag.Parse()
+
+	log.SetPrefix("BLODE ")
+	log.SetFlags(log.Ldate | log.Lmicroseconds)
+
 	log.Println("blode version ", BLODE_VERSION)
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	stream := NewStream()

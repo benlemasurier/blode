@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-  "net"
+	"net"
 )
 
 type Stream struct {
