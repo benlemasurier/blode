@@ -7,13 +7,14 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"regexp"
 	"runtime"
 	"sync"
 )
 
 const (
-  BLODE_VERSION    = "0.0.1"
+	BLODE_VERSION    = "0.0.1"
 	TCP_ADDR         = ":8001"
 	UDP_ADDR         = ":8002"
 	UDP_BUF_SIZE     = 4096
@@ -49,13 +50,12 @@ func (s *Stream) Connect(conn net.Conn) {
 
 	go func() {
 		for {
-			s.incoming <- <-c.incoming
-		}
-	}()
-
-	go func() {
-		for {
-			s.disconnect <- <-c.disconnect
+			select {
+			case incoming := <-c.incoming:
+				s.incoming <- incoming
+			case disconnect := <-c.disconnect:
+				s.disconnect <- disconnect
+			}
 		}
 	}()
 }
@@ -187,12 +187,6 @@ func (c *Client) Read() {
 		event, err := NewEvent(data)
 		if err != nil {
 			log.Println(err)
-			continue
-		}
-
-		if event.Message == "" {
-			// TODO: proper type here
-			c.errors <- "{\"error\": \"invalid message format\"}\n"
 			continue
 		}
 
@@ -341,7 +335,7 @@ func tcp_server(s *Stream) {
 		log.Fatal(err)
 	}
 
-  log.Println("tcp server started, ", TCP_ADDR)
+	log.Println("tcp server started, ", TCP_ADDR)
 
 	for {
 		conn, err := tcp_server.Accept()
@@ -367,7 +361,7 @@ func udp_server(s *Stream) {
 		log.Fatal(err)
 	}
 
-  log.Println("udp server started, ", UDP_ADDR)
+	log.Println("udp server started, ", UDP_ADDR)
 
 	var buf [UDP_BUF_SIZE]byte
 	for {
@@ -394,7 +388,7 @@ func udp_server(s *Stream) {
 }
 
 func main() {
-  log.Println("blode version ", BLODE_VERSION)
+	log.Println("blode version ", BLODE_VERSION)
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	stream := NewStream()
 
