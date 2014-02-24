@@ -3,27 +3,22 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/benlemasurier/blode/config"
 	"log"
 	"net"
 	"os"
 	"runtime"
 )
 
-const (
-	BLODE_VERSION    = "0.0.1"
-	TCP_ADDR         = ":8001"
-	UDP_ADDR         = ":8002"
-	UDP_BUF_SIZE     = 4096
-	DEFAULT_SEVERITY = "debug"
-)
+const UDP_BUF_SIZE = 4096
 
 func tcp_server(s *Stream) {
-	tcp_server, err := net.Listen("tcp", TCP_ADDR)
+	tcp_server, err := net.Listen("tcp", config.TcpAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("tcp server started,", TCP_ADDR)
+	log.Println("tcp server started,", config.TcpAddr)
 
 	for {
 		conn, err := tcp_server.Accept()
@@ -39,7 +34,7 @@ func tcp_server(s *Stream) {
 }
 
 func udp_server(s *Stream) {
-	udp_addr, err := net.ResolveUDPAddr("udp", UDP_ADDR)
+	udp_addr, err := net.ResolveUDPAddr("udp", config.UdpAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,7 +44,7 @@ func udp_server(s *Stream) {
 		log.Fatal(err)
 	}
 
-	log.Println("udp server started,", UDP_ADDR)
+	log.Println("udp server started,", config.UdpAddr)
 
 	var buf [UDP_BUF_SIZE]byte
 	for {
@@ -86,7 +81,7 @@ func main() {
 	log.SetPrefix("BLODE ")
 	log.SetFlags(log.Ldate | log.Lmicroseconds)
 
-	log.Println("blode version ", BLODE_VERSION)
+	log.Println("blode version ", config.Version)
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	stream := NewStream()
 

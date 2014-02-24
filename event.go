@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/benlemasurier/blode/config"
 	"github.com/nu7hatch/gouuid"
 	"log"
 )
@@ -34,7 +35,7 @@ func NewEvent(event string) (*Event, error) {
 
 	// assign a message severity if none was provided
 	if e.Severity == "" {
-		e.Severity = DEFAULT_SEVERITY
+		e.Severity = config.DefaultSeverity
 	}
 
 	return e, nil
