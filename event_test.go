@@ -4,13 +4,6 @@ import "testing"
 
 const test_message = "{'severity': '1', 'message': 'test'}"
 
-func TestNewStream(t *testing.T) {
-	s := NewStream()
-	for c := range s.clients {
-		t.Errorf("%v", c)
-	}
-}
-
 func TestNewEvent(t *testing.T) {
 	e, err := NewEvent(test_message)
 	if err != nil {
