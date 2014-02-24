@@ -90,6 +90,7 @@ func (s *Stream) Stats(c *Client) {
 		return
 	}
 
+  // FIXME: create another channel for stats?
 	c.errors <- string(stats) + "\n"
 }
 
@@ -158,7 +159,7 @@ func (c *Client) Read() {
 
 		c.stream.stats.AddBytesIn(len([]byte(data)))
 
-		if data == "\n" {
+		if data == "\r\n" {
 			continue
 		}
 
