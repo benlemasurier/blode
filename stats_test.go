@@ -56,3 +56,51 @@ func TestAddError(t *testing.T) {
 		t.Errorf("stats.Errors should equal 1, got %d", stats.Errors)
 	}
 }
+
+func BenchmarkAddEvent(b *testing.B) {
+	stats := Stats{}
+
+	for n := 0; n < b.N; n++ {
+		stats.AddEvent()
+	}
+}
+
+func BenchmarkAddPeer(b *testing.B) {
+	stats := Stats{}
+
+	for n := 0; n < b.N; n++ {
+		stats.AddPeer()
+	}
+}
+
+func BenchmarkRemovePeer(b *testing.B) {
+	stats := Stats{}
+
+	for n := 0; n < b.N; n++ {
+		stats.RemovePeer()
+	}
+}
+
+func BenchmarkAddBytesIn(b *testing.B) {
+	stats := Stats{}
+
+	for n := 0; n < b.N; n++ {
+		stats.AddBytesIn(1)
+	}
+}
+
+func BenchmarkAddBytesOut(b *testing.B) {
+	stats := Stats{}
+
+	for n := 0; n < b.N; n++ {
+		stats.AddBytesOut(1)
+	}
+}
+
+func BenchmarkAddError(b *testing.B) {
+	stats := Stats{}
+
+	for n := 0; n < b.N; n++ {
+		stats.AddError(1)
+	}
+}
