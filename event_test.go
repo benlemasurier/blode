@@ -11,7 +11,7 @@ func TestNewEvent(t *testing.T) {
 	}
 
 	if e.Id == "" {
-		t.Errorf("NewEvent(%v) returned without an ID")
+		t.Errorf("NewEvent(%v) returned without an ID", test_message)
 	}
 }
 
