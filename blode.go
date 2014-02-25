@@ -71,7 +71,9 @@ func udp_server(s *Stream) {
 
 		s.incoming <- event
 
-		log.Printf("%vb received <- udp[%v] \n", rlen, addr.IP)
+		if *config.Debug {
+			log.Printf("%vb received <- udp[%v] \n", rlen, addr.IP)
+		}
 	}
 }
 
