@@ -17,7 +17,9 @@ func tcp_server(s *Stream) {
 		log.Fatal(err)
 	}
 
-	log.Println("tcp server started,", *config.TcpAddr)
+	if *config.Debug {
+		log.Println("tcp server started,", *config.TcpAddr)
+	}
 
 	for {
 		conn, err := tcp_server.Accept()

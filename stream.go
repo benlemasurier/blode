@@ -33,12 +33,14 @@ func (s *Stream) Connect(conn net.Conn) {
 	s.clients[conn] = c
 
 	go func() {
+	LISTENER:
 		for {
 			select {
 			case incoming := <-c.incoming:
 				s.incoming <- incoming
 			case disconnect := <-c.disconnect:
 				s.disconnect <- disconnect
+				break LISTENER
 			}
 		}
 	}()
