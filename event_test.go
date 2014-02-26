@@ -2,7 +2,7 @@ package main
 
 import "testing"
 
-const test_message = "{'severity': '1', 'message': 'test'}"
+const test_message = "{\"severity\": \"1\", \"message\": \"test\"}"
 
 func TestNewEvent(t *testing.T) {
 	e, err := NewEvent(test_message)
