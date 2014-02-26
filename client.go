@@ -88,9 +88,11 @@ func (c *Client) Read() {
 
 		event, err := NewEvent(data)
 		if err != nil {
-			log.Println(err)
+      c.errors <- err.Error() + "\n"
 			continue
 		}
+
+    log.Println(data)
 
 		c.incoming <- event
 	}

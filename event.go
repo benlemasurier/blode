@@ -5,6 +5,7 @@ import (
 	"github.com/benlemasurier/blode/config"
 	"github.com/nu7hatch/gouuid"
 	"log"
+  "errors"
 )
 
 type Event struct {
@@ -37,6 +38,10 @@ func NewEvent(event string) (*Event, error) {
 	if e.Severity == "" {
 		e.Severity = *config.DefaultSeverity
 	}
+
+  if e.Message == "" {
+    return nil, errors.New("Unrecognized message format")
+  }
 
 	return e, nil
 }
