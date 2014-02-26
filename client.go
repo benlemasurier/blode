@@ -92,8 +92,6 @@ func (c *Client) Read() {
 			continue
 		}
 
-    log.Println(data)
-
 		c.incoming <- event
 	}
 }
