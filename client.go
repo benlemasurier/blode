@@ -125,8 +125,8 @@ func (c *Client) Listen() {
 }
 
 func (c *Client) Close() {
-	c.conn.Close()
 	c.disconnect <- c.conn
+	c.conn.Close()
 
 	log.Printf("client disconnected: %s", c.conn.RemoteAddr().String())
 }
